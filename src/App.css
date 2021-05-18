@@ -1,51 +1,67 @@
 body {
-  font: 14px "Century Gothic", Futura, sans-serif;
-  margin: 20px;
+  font-size: 16px;
+  font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+  margin: 0px;
 }
 
-ol,
-ul {
-  padding-left: 30px;
+p {
+  margin: 0px;
 }
 
-.board-row:after {
-  clear: both;
-  content: "";
-  display: table;
+.navbar {
+  height: 50px;
 }
 
-.status {
-  margin-bottom: 10px;
+.app-columns {
+  height: calc(100vh - 50px);
+  padding: 0px;
 }
 
-.square {
-  background: #fff;
-  border: 1px solid #999;
+.project-column-wrapper {
+  height: 100%;
+  margin: 0.0125em;
+  border: 2px solid #fff;
+  background-color: #f8f8f8;
+}
+
+.project-column-header {
+  padding: 0.2em 0.5em;
+  background-color: #dbdbdb;
+  /* font-weight: bold; */
+  font-size: 1.2em;
+  border-radius: 2px;
   float: left;
-  font-size: 24px;
-  font-weight: bold;
-  line-height: 34px;
-  height: 34px;
-  margin-right: -1px;
-  margin-top: -1px;
-  padding: 0;
-  text-align: center;
-  width: 34px;
+  width: 100%;
 }
 
-.square:focus {
-  outline: none;
+.project-column-title {
+  width: 100%;
+  float: left;
 }
 
-.kbd-navigation .square:focus {
-  background: #ddd;
+.project-column-icon {
+  width: 20px;
 }
 
-.game {
-  display: flex;
-  flex-direction: row;
+.project-lister {
+  float: left;
+  width: 100%;
+  overflow-y: auto;
+  height: calc(100% - 40px);
 }
 
-.game-info {
-  margin-left: 20px;
+.app-request-wrapper,
+.app-payload-wrapper {
+  padding: 8px 20px;
+}
+
+.save-this-request {
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+  border-top: 1px solid #ababab;
 }
