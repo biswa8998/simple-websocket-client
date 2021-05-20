@@ -8,6 +8,10 @@ p {
   margin: 0px;
 }
 
+.MuiButton-containedPrimary:hover {
+  background-color: #fd740f !important;
+}
+
 .navbar {
   height: 50px;
 }
@@ -26,12 +30,12 @@ p {
 
 .project-column-header {
   padding: 0.2em 0.5em;
-  background-color: #dbdbdb;
-  /* font-weight: bold; */
+  background-color: #ff8d3a;
   font-size: 1.2em;
   border-radius: 2px;
   float: left;
   width: 100%;
+  color: #fff;
 }
 
 .project-column-title {
