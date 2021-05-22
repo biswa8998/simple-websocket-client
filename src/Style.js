@@ -33,6 +33,24 @@ const AppStyles = makeStyles(theme => ({
   },
   urlErrorText: {
     marginLeft: 20
+  },
+  messageItem: {
+    maxWidth: "100%"
+  },
+  messageFontSize: {
+    fontSize: 10
+  },
+  receivedMessage: {
+    backgroundColor: "#b3dcc1",
+    borderRadius: 4,
+    marginBottom: 4,
+    padding: 8
+  },
+  sentMessage: {
+    backgroundColor: "#ff9c9c",
+    borderRadius: 4,
+    marginBottom: 4,
+    padding: 8
   }
 }));
 

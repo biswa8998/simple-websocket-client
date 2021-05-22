@@ -4,7 +4,7 @@ import { Grid } from "@material-ui/core";
 
 import AppColumnHeaders from "./AppColumnHeaders";
 
-import Lists from "./Lists";
+import { ButtonedLists } from "./Lists";
 
 function AppRequests(props) {
   return (
@@ -12,12 +12,13 @@ function AppRequests(props) {
       <div className="project-column-wrapper">
         <AppColumnHeaders title="Requests" />
         <div className="project-lister">
-          <Lists
+          <ButtonedLists
             Items={props.requests}
             onClick={props.onRequestClick}
-            onEdit={props.onRequestEdit}
-            onDelete={props.onRequestDelete}
+            onClickEdit={props.onRequestEdit}
+            onClickDelete={props.onRequestDelete}
             editAndDelete={true}
+            selected={props.selectedRequestIndex}
           />
         </div>
       </div>

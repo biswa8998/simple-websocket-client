@@ -4,7 +4,7 @@ import { Grid } from "@material-ui/core";
 
 import AppColumnHeaders from "./AppColumnHeaders";
 
-import Lists from "./Lists";
+import { ButtonedLists } from "./Lists";
 
 function AppProjects(props) {
   return (
@@ -12,12 +12,13 @@ function AppProjects(props) {
       <div className="project-column-wrapper">
         <AppColumnHeaders title="Projects" />
         <div className="project-lister">
-          <Lists
+          <ButtonedLists
             Items={props.projects}
             onClick={props.onProjectClick}
-            onEdit={props.onProjectEdit}
-            onDelete={props.onProjectDelete}
+            onClickEdit={props.onProjectEdit}
+            onClickDelete={props.onProjectDelete}
             editAndDelete={props.editAndDelete}
+            selected={props.selectedProjectIndex}
           />
         </div>
       </div>

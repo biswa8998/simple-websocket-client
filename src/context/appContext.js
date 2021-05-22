@@ -5,7 +5,7 @@ export const appData = {
     Projects: [
       {
         Name: "Untitled",
-        Url: "",
+        Url: "", //wss://echo.websocket.org
         Requests: []
       }
     ]

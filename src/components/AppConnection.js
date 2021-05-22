@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import { Grid, Typography } from "@material-ui/core";
 import AppStyles from "../Style";
@@ -6,10 +6,13 @@ import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
 
 function AppConnection(props) {
-  console.log(props);
   const classes = AppStyles();
 
-  const [url, setUrl] = useState("");
+  const [url, setUrl] = useState(props.urlValue);
+  useEffect(() => {
+    setUrl(props.urlValue);
+  }, [props.urlValue]);
+
   const [urlError, setUrlError] = useState(false);
 
   function isValidUrl() {
@@ -22,7 +25,7 @@ function AppConnection(props) {
   }
 
   return (
-    <Grid className="app-request-wrapper">
+    <Grid id="app-request-wrapper" className="app-request-wrapper">
       <Grid container direction="row" justify="flex-start" alignItems="center">
         <TextField
           id="outlined-basic"
@@ -36,20 +39,19 @@ function AppConnection(props) {
             setUrl(e.target.value);
           }}
           onClick={() => {
-            setUrl(props.urlValue);
             setUrlError(false);
           }}
         />
         <Button
           variant="contained"
-          color="primary"
+          color={props.connected ? "secondary" : "primary"}
           classes={{ root: classes.buttonConnect }}
           onClick={() => {
             if (isValidUrl()) props.onClickConnect(url);
           }}
           disabled={url.length === 0}
         >
-          CONNECT
+          {props.connected ? "DISCONNECT" : "CONNECT"}
         </Button>
       </Grid>
       <p className="save-this-request">

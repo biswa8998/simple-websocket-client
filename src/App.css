@@ -55,7 +55,8 @@ p {
 }
 
 .app-request-wrapper,
-.app-payload-wrapper {
+.app-payload-wrapper,
+.app-messages {
   padding: 8px 20px;
 }
 
@@ -68,4 +69,16 @@ p {
   width: 100%;
   height: 1px;
   border-top: 1px solid #ababab;
+}
+.receivedMessageHeader {
+  background-color: #78ca78;
+  padding: 4px;
+  margin-bottom: 4px;
+  border-radius: 4px;
+}
+.sentMessageHeader {
+  background-color: #ed5959;
+  padding: 4px;
+  margin-bottom: 4px;
+  border-radius: 4px;
 }
