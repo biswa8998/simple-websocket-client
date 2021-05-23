@@ -57,14 +57,25 @@ function AppConnection(props) {
       <p className="save-this-request">
         <Button
           color="primary"
+          variant="contained"
+          size="small"
+          onClick={() => {
+            if (isValidUrl()) props.saveNewProject(url);
+          }}
+        >
+          NEW PROJECT
+        </Button>
+        {/* <Button
+          color="primary"
           variant="outlined"
           size="small"
           onClick={() => {
-            if (isValidUrl()) props.onClickSave(url);
+            if (isValidUrl()) props.saveNewProject(url);
           }}
+          style={{ marginLeft: "20px" }}
         >
-          SAVE
-        </Button>
+          UPDATE
+        </Button> */}
         {false ? (
           <Typography
             variant="caption"

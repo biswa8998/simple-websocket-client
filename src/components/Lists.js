@@ -23,6 +23,7 @@ function Item(props) {
         onClick={() => {
           props.onClick(props.id);
         }}
+        title={props.itemValue}
       >
         <>
           <ListItemText

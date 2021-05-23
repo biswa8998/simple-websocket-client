@@ -6,7 +6,12 @@ export const appData = {
       {
         Name: "Untitled",
         Url: "", //wss://echo.websocket.org
-        Requests: []
+        Requests: [],
+        Socket: {
+          ConnectionStatus: false,
+          Connection: null
+        },
+        Messages: []
       }
     ]
   },

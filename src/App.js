@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 
@@ -7,7 +7,7 @@ import { Grid } from "@material-ui/core";
 import { createMuiTheme, ThemeProvider } from "@material-ui/core/styles";
 import AppProjects from "./components/AppProjects";
 import AppRequests from "./components/AppRequests";
-import { SaveProjectDialog, EditDialog } from "./components/Dialogs";
+import { EditDialog } from "./components/Dialogs";
 import AppContext, { appData } from "./context/appContext";
 import Types from "./dataType";
 import AppConnection from "./components/AppConnection";
@@ -20,7 +20,7 @@ import { makeStyles } from "@material-ui/core/styles";
 
 import WS from "./Websocket";
 
-let appSocket = null;
+// let appSocket = null;
 let appMessagesGlobal = [];
 
 const theme = createMuiTheme({
@@ -47,39 +47,38 @@ function AppNavbar() {
 }
 
 function App() {
-  const savedData = getLocalStorage("data");
-  let applicationData,
-    preSelectedProj = 0,
-    preSelectedRequest = 0;
+  const [existingAppData, setExistingAppData] = useState(appData);
+  const [pIndex, setProjectIndex] = useState(0);
+  const [rIndex, setRequestIndex] = useState(0);
 
-  if (savedData) {
-    applicationData = savedData;
-    if (applicationData.App.Projects.length > 1) {
-      preSelectedProj = 1;
-      if (applicationData.App.Projects[1].Requests.length > 0) {
-        preSelectedRequest = 0;
+  useEffect(() => {
+    const savedData = getLocalStorage("data");
+    let applicationData,
+      preSelectedProj = 0,
+      preSelectedRequest = 0;
+
+    if (savedData) {
+      applicationData = savedData;
+      if (applicationData.App.Projects.length > 1) {
+        preSelectedProj = 1;
+        if (applicationData.App.Projects[1].Requests.length > 0) {
+          preSelectedRequest = 0;
+        }
       }
+    } else {
+      applicationData = appData;
     }
-  } else {
-    applicationData = appData;
-  }
 
-  const [existingAppData, setExistingAppData] = useState(applicationData);
+    setExistingAppData(applicationData);
+    setProjectIndex(preSelectedProj);
+    setRequestIndex(preSelectedRequest);
+  }, []);
 
   const [appUrl, setAppUrl] = useState("");
 
-  const [connected, setConnected] = useState(false);
-
-  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [lastAction, setLastAction] = useState({});
   const [showProjectEditDialog, setShowProjectEditDialog] = useState(false);
   const [showRequestEditDialog, setShowRequestEditDialog] = useState(false);
-
-  const [selectedProjectIndex, setSelectedProjectIndex] = useState(
-    preSelectedProj
-  );
-  const [selectedRequestIndex, setSelectedRequestIndex] = useState(
-    preSelectedRequest
-  );
 
   // eslint-disable-next-line
   const [refresh, setRefresh] = useState(false);
@@ -95,10 +94,6 @@ function App() {
     });
   }
 
-  function toggleSaveDialog() {
-    setShowSaveDialog(!showSaveDialog);
-  }
-
   function toggleProjectEditDialog() {
     setShowProjectEditDialog(!showProjectEditDialog);
   }
@@ -109,12 +104,17 @@ function App() {
 
   function addMessage(message) {
     message["time"] = getTime();
-    appMessagesGlobal.splice(0, 0, message);
+    // appMessagesGlobal.splice(0, 0, message);
+
+    const newData = { ...existingAppData };
+    newData.App.Projects[pIndex].Messages.splice(0, 0, message);
+    setExistingAppData(newData);
   }
 
-  function onClickSave(url) {
+  function saveNewProject(url) {
     setAppUrl(url);
-    toggleSaveDialog();
+    setLastAction({ type: Types.NEW_PROJECT, data: null });
+    toggleProjectEditDialog();
   }
 
   function onConnectSuccess(event) {
@@ -122,16 +122,21 @@ function App() {
       type: Types.RECEIVED_MESSAGE,
       message: "Connected to url " + appUrl
     });
-    setConnected(true);
+
+    const newData = { ...existingAppData };
+    newData.App.Projects[pIndex].Socket.ConnectionStatus = true;
+    setExistingAppData(newData);
   }
 
   function onCloseSuccess(event) {
-    appSocket = null;
     addMessage({
       type: Types.RECEIVED_MESSAGE,
       message: "Connection closed to url " + appUrl
     });
-    setConnected(false);
+    const newData = { ...existingAppData };
+    newData.App.Projects[pIndex].Socket.Connection = null;
+    newData.App.Projects[pIndex].Socket.ConnectionStatus = false;
+    setExistingAppData(newData);
   }
 
   function onError(event) {
@@ -147,7 +152,7 @@ function App() {
   }
 
   function onClickConnect(url) {
-    if (!connected) {
+    if (!existingAppData.App.Projects[pIndex].Socket.ConnectionStatus) {
       // request for connection
       addMessage({
         type: Types.SENT_MESSAGE,
@@ -155,91 +160,91 @@ function App() {
       });
 
       // Make Websocket instance
-      appSocket = new WS(url);
+      const appSocket = new WS(url);
       appSocket.addOnOpen(onConnectSuccess);
       appSocket.addOnClose(onCloseSuccess);
       appSocket.addOnMessage(onWsMessage);
       appSocket.addOnError(onError);
+
+      const newData = { ...existingAppData };
+      newData.App.Projects[pIndex].Socket.Connection = appSocket;
+      setExistingAppData(newData);
     } else {
       addMessage({
         type: Types.SENT_MESSAGE,
         message: "Close connection to url " + url
       });
-      appSocket.close();
+      existingAppData.App.Projects[pIndex].Socket.Connection.close();
     }
 
     setAppUrl(url);
   }
 
   function onClickSend(payload) {
-    if (connected && payload.trim().length > 0) {
-      let newData = Object.assign({}, existingAppData);
-
-      // Check if this is unsaved untitled project
-      if (newData.App.Projects.length === 1) {
-      }
-
-      let requestArray = Object.assign(
-        [],
-        newData.App.Projects[selectedProjectIndex].Requests
-      );
-
-      requestArray.splice(0, 0, {
-        Name: payload.substr(0, 11),
-        Payload: payload
-      });
-      newData.App.Projects[selectedProjectIndex].Requests = requestArray;
-
+    if (
+      existingAppData.App.Projects[pIndex].Socket.ConnectionStatus &&
+      payload.trim().length > 0
+    ) {
       // send message to websocket
-      appSocket.send(payload);
+      existingAppData.App.Projects[pIndex].Socket.Connection.send(payload);
 
       addMessage({
         type: Types.SENT_MESSAGE,
         message: payload
       });
-      saveAppData(newData);
     }
+  }
+
+  function addRequestToProject(payload) {
+    setLastAction({ type: Types.NEW_REQUEST, data: payload });
+    toggleRequestEditDialog();
   }
 
   function onProjectClick(i) {
     const actualProjectIndex = existingAppData.InitialState ? i : i + 1;
-    setSelectedProjectIndex(actualProjectIndex);
+
+    if (actualProjectIndex !== pIndex) {
+      setRequestIndex(0);
+      setProjectIndex(actualProjectIndex);
+    }
   }
 
   function onRequestClick(i) {
-    setSelectedRequestIndex(i);
+    setRequestIndex(i);
   }
 
   function updateAppData(data) {
     if (data.type === Types.NEW_PROJECT) {
       // Check if first project being saved
       let newData = { ...existingAppData };
-      let newProject = Object.assign({}, newData.App.Projects[0]);
+      let newProject = { ...newData.App.Projects[0] };
       newData.App.Projects.push(newProject);
-      newData.App.Projects[newData.App.Projects.length - 1].Name =
-        data.projectName;
-      newData.App.Projects[newData.App.Projects.length - 1].Url = appUrl;
-
-      if (newData.App.Projects.length === 2) {
-        // if already requests are made, copy them in newly created project
-        newData.App.Projects[
-          newData.App.Projects.length - 1
-        ].Requests = Object.assign([], newData.App.Projects[0].Requests);
-
-        // and clear the projects from untitled
-        newData.App.Projects[0].Requests = [];
+      if (newData.App.Projects[0].Socket.ConnectionStatus) {
+        newData.App.Projects[newData.App.Projects.length - 1].Name =
+          data.project.name;
+        newData.App.Projects[newData.App.Projects.length - 1].Url =
+          data.project.url;
       } else {
-        newData.App.Projects[newData.App.Projects.length - 1].Requests = [];
+        newData.App.Projects[newData.App.Projects.length - 1].Name =
+          data.project.name;
+        newData.App.Projects[newData.App.Projects.length - 1].Url =
+          data.project.url;
+
+        newData.App.Projects[newData.App.Projects.length - 1]["Messages"] = [];
+        newData.App.Projects[newData.App.Projects.length - 1]["Socket"] = {
+          ConnectionStatus: false,
+          Connection: null
+        };
       }
 
       newData.InitialState = false;
       saveAppData(newData);
-      setSelectedProjectIndex(newData.App.Projects.length - 1);
-      // if (newData.App.Projects.length == 2) setSelectedProjectIndex(1);
+      setProjectIndex(newData.App.Projects.length - 1);
+      // if (newData.App.Projects.length == 2) setProjectIndex(1);
     } else if (data.type === Types.EDIT_PROJECT) {
       let newData = { ...existingAppData };
-      newData.App.Projects[selectedProjectIndex].Name = data.project.name;
-      newData.App.Projects[selectedProjectIndex].Url = data.project.url;
+      newData.App.Projects[pIndex].Name = data.project.name;
+      newData.App.Projects[pIndex].Url = data.project.url;
       saveAppData(newData);
     } else if (data.type === Types.DELETE_PROJECT) {
       const actualProjectIndex = existingAppData.InitialState
@@ -254,26 +259,37 @@ function App() {
         newData.InitialState = true;
       }
 
-      setSelectedProjectIndex(0);
+      setProjectIndex(0);
+      saveAppData(newData);
+    } else if (data.type === Types.NEW_REQUEST) {
+      let newData = Object.assign({}, existingAppData);
+
+      // Check if this is unsaved untitled project
+      let requestArray = Object.assign(
+        [],
+        newData.App.Projects[pIndex].Requests
+      );
+
+      requestArray.push({
+        Name: data.project.name,
+        Payload: data.project.url
+      });
+      newData.App.Projects[pIndex].Requests = requestArray;
       saveAppData(newData);
     } else if (data.type === Types.EDIT_REQUEST) {
       let newData = { ...existingAppData };
-      newData.App.Projects[selectedProjectIndex].Requests[
-        selectedRequestIndex
-      ].Name = data.project.name;
-      newData.App.Projects[selectedProjectIndex].Requests[
-        selectedRequestIndex
-      ].Payload = data.project.url;
+      newData.App.Projects[pIndex].Requests[rIndex].Name = data.project.name;
+      newData.App.Projects[pIndex].Requests[rIndex].Payload = data.project.url;
       saveAppData(newData);
     } else if (data.type === Types.DELETE_REQUEST) {
       let newData = { ...existingAppData };
-      newData.App.Projects[selectedProjectIndex].Requests = Object.assign(
+      newData.App.Projects[pIndex].Requests = Object.assign(
         [],
-        existingAppData.App.Projects[selectedProjectIndex].Requests
+        existingAppData.App.Projects[pIndex].Requests
       );
-      newData.App.Projects[selectedProjectIndex].Requests.splice(data.id, 1);
+      newData.App.Projects[pIndex].Requests.splice(data.id, 1);
 
-      setSelectedRequestIndex(0);
+      setRequestIndex(0);
 
       saveAppData(newData);
     }
@@ -299,7 +315,11 @@ function App() {
     return AppStyles;
   }
 
-  console.log(existingAppData, selectedProjectIndex, appMessagesGlobal);
+  console.log(
+    existingAppData,
+    pIndex,
+    existingAppData.App.Projects[pIndex].Messages
+  );
   return (
     <ThemeProvider theme={theme}>
       <AppContext.Provider value={AppData}>
@@ -315,6 +335,7 @@ function App() {
               }
               onProjectClick={onProjectClick}
               onProjectEdit={data => {
+                setLastAction({ type: Types.EDIT_PROJECT, data: null });
                 toggleProjectEditDialog();
               }}
               onProjectDelete={data => {
@@ -322,51 +343,50 @@ function App() {
               }}
               editAndDelete={existingAppData.App.Projects.length > 1}
               selectedProjectIndex={
-                existingAppData.InitialState
-                  ? selectedProjectIndex
-                  : selectedProjectIndex - 1
+                existingAppData.InitialState ? pIndex : pIndex - 1
               }
             />
             {/* List all the requests of selected project */}
             <AppRequests
-              requests={
-                existingAppData.App.Projects[selectedProjectIndex].Requests
-              }
+              requests={existingAppData.App.Projects[pIndex].Requests}
               onRequestClick={onRequestClick}
               onRequestEdit={data => {
+                setLastAction({ type: Types.EDIT_REQUEST, data: null });
                 toggleRequestEditDialog();
               }}
               onRequestDelete={data => {
                 updateAppData({
                   type: Types.DELETE_REQUEST,
                   id: data.id,
-                  project: selectedProjectIndex
+                  project: pIndex
                 });
               }}
-              selectedRequestIndex={selectedRequestIndex}
+              selectedRequestIndex={rIndex}
             />
             {/* Request and response */}
             <Grid item lg={8} xs={12} className="app-columns">
               <Grid id="connection-section" className="project-column-wrapper">
                 <AppConnection
-                  onClickSave={onClickSave}
+                  saveNewProject={saveNewProject}
                   onClickConnect={onClickConnect}
-                  urlValue={
-                    existingAppData.App.Projects[selectedProjectIndex].Url
+                  urlValue={existingAppData.App.Projects[pIndex].Url}
+                  connected={
+                    existingAppData.App.Projects[pIndex].Socket.ConnectionStatus
                   }
-                  connected={connected}
                 />
                 <AppPayload
                   onClickSend={onClickSend}
                   payload={
-                    existingAppData.App.Projects[selectedProjectIndex].Requests[
-                      selectedRequestIndex
-                    ]
-                      ? existingAppData.App.Projects[selectedProjectIndex]
-                          .Requests[selectedRequestIndex].Payload
+                    existingAppData.App.Projects[pIndex].Requests[rIndex]
+                      ? existingAppData.App.Projects[pIndex].Requests[rIndex]
+                          .Payload
                       : ""
                   }
-                  connected={connected}
+                  connected={
+                    existingAppData.App.Projects[pIndex].Socket.ConnectionStatus
+                  }
+                  addToProject={addRequestToProject}
+                  hasProject={!existingAppData.InitialState}
                 />
 
                 <Grid className="divider" />
@@ -378,54 +398,73 @@ function App() {
                   }}
                 >
                   <Grid container>
-                    <MessageLists messages={appMessagesGlobal} />
+                    <MessageLists
+                      messages={existingAppData.App.Projects[pIndex].Messages}
+                    />
                   </Grid>
                 </Grid>
               </Grid>
             </Grid>
           </Grid>
-          <SaveProjectDialog
-            open={showSaveDialog}
-            closeDialog={toggleSaveDialog}
-          />
-          <EditDialog
-            open={showProjectEditDialog}
-            closeDialog={toggleProjectEditDialog}
-            type="project"
-            projectId={selectedProjectIndex}
-            title="Edit Project"
-            description="Use a distinct project name to save configuration"
-            projectName={
-              existingAppData.App.Projects[selectedProjectIndex].Name
-            }
-            projectUrl={existingAppData.App.Projects[selectedProjectIndex].Url}
-          />
-          <EditDialog
-            open={showRequestEditDialog}
-            closeDialog={toggleRequestEditDialog}
-            type="request"
-            projectId={selectedRequestIndex}
-            title="Edit Request"
-            description="Use a distinct request name to save configuration"
-            projectName={
-              existingAppData.App.Projects[selectedProjectIndex].Requests[
-                selectedRequestIndex
-              ]
-                ? existingAppData.App.Projects[selectedProjectIndex].Requests[
-                    selectedRequestIndex
-                  ].Name
-                : ""
-            }
-            projectUrl={
-              existingAppData.App.Projects[selectedProjectIndex].Requests[
-                selectedRequestIndex
-              ]
-                ? existingAppData.App.Projects[selectedProjectIndex].Requests[
-                    selectedRequestIndex
-                  ].Payload
-                : ""
-            }
-          />
+          {showProjectEditDialog && (
+            <EditDialog
+              open={showProjectEditDialog}
+              closeDialog={toggleProjectEditDialog}
+              projectId={pIndex}
+              type={lastAction.type}
+              title={
+                lastAction.type === Types.NEW_PROJECT
+                  ? "Create New Project"
+                  : "Edit Project"
+              }
+              labelOne="Project Name"
+              labelTwo="Url"
+              leftButtonText={
+                lastAction.type === Types.NEW_PROJECT ? "CREATE" : "UPDATE"
+              }
+              description="Use a distinct project name to save configuration"
+              projectName={
+                lastAction.type === Types.NEW_PROJECT
+                  ? ""
+                  : existingAppData.App.Projects[pIndex].Name
+              }
+              projectUrl={
+                lastAction.type === Types.NEW_PROJECT
+                  ? appUrl
+                  : existingAppData.App.Projects[pIndex].Url
+              }
+            />
+          )}
+          {showRequestEditDialog && (
+            <EditDialog
+              open={showRequestEditDialog}
+              closeDialog={toggleRequestEditDialog}
+              type={lastAction.type}
+              projectId={rIndex}
+              title={
+                lastAction.type === Types.NEW_REQUEST
+                  ? "Add Request"
+                  : "Edit Request"
+              }
+              labelOne="Request Name"
+              labelTwo="Payload"
+              leftButtonText={
+                lastAction.type === Types.NEW_REQUEST ? "CREATE" : "UPDATE"
+              }
+              description="Use a distinct request name to save configuration"
+              projectName={
+                lastAction.type === Types.NEW_REQUEST
+                  ? ""
+                  : existingAppData.App.Projects[pIndex].Requests[rIndex].Name
+              }
+              projectUrl={
+                lastAction.type === Types.NEW_REQUEST
+                  ? lastAction.data
+                  : existingAppData.App.Projects[pIndex].Requests[rIndex]
+                      .Payload
+              }
+            />
+          )}
         </div>
       </AppContext.Provider>
     </ThemeProvider>

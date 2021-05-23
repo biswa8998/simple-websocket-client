@@ -1,6 +1,15 @@
 export function setLocalStorage(data, key = "data") {
+  // Remove messages and set ConnectionStatus to false
+  const newData = JSON.parse(JSON.stringify(data));
+  let len = newData.App.Projects.length;
+  for (let i = 0; i < len; i++) {
+    newData.App.Projects[i].Messages = [];
+    newData.App.Projects[i].Socket.ConnectionStatus = false;
+    newData.App.Projects[i].Socket.Connection = null;
+  }
+
   return new Promise(resolve => {
-    localStorage.setItem(key, JSON.stringify(data));
+    localStorage.setItem(key, JSON.stringify(newData));
     resolve();
   });
 }

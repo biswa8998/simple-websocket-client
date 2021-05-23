@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Button from "@material-ui/core/Button";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
@@ -46,264 +46,96 @@ function DialogSlide(props) {
   );
 }
 
-export function SaveProjectDialog(props) {
-  const [projectName, setProjectName] = useState("");
-  const [projectNameError, setProjectNameError] = useState(false);
-  const refProjectName = useRef(null);
-
-  useEffect(() => {
-    if (props.open) {
-      getFocus();
-    }
-  }, [props.open]);
-
-  function getFocus() {
-    refProjectName.current.focus();
-  }
-
-  return (
-    <AppContext.Consumer>
-      {value => {
-        function saveProject() {
-          if (projectName.trim().length === 0) {
-            setProjectNameError(true);
-            return;
-          }
-
-          value.updateData({
-            type: Types.NEW_PROJECT,
-            projectName: projectName
-          });
-
-          // clean up
-          setProjectName("");
-          props.closeDialog();
-        }
-
-        return (
-          <DialogSlide
-            open={props.open}
-            title="Save Project"
-            leftButtonText="SAVE"
-            leftButtonAction={saveProject}
-            rightButtonText="CANCEL"
-            rightButtonAction={props.closeDialog}
-            closeDialog={props.closeDialog}
-          >
-            <DialogContent>
-              <DialogContentText id="dialog-slide-description">
-                Enter a distinct project name to save current configuration
-              </DialogContentText>
-
-              <TextField
-                inputRef={refProjectName}
-                variant="outlined"
-                type="text"
-                margin="dense"
-                id="project-name"
-                label="Project Name"
-                fullWidth
-                value={projectName}
-                error={projectNameError}
-                onChange={e => {
-                  setProjectName(e.target.value);
-                }}
-                onClick={() => {
-                  setProjectNameError(false);
-                }}
-                onKeyPress={e => {
-                  if (e.key.toLowerCase() === "enter") {
-                    saveProject();
-                    props.closeDialog();
-                  }
-                }}
-              />
-            </DialogContent>
-          </DialogSlide>
-        );
-      }}
-    </AppContext.Consumer>
-  );
-}
-
 export function EditDialog(props) {
   const [projectName, setProjectName] = useState(props.projectName);
   const [url, setUrl] = useState(props.projectUrl);
   const [projectNameError, setProjectNameError] = useState(false);
 
-  useEffect(() => {
-    setProjectName(props.projectName);
-    setUrl(props.projectUrl);
-  }, [props.projectName, props.projectUrl]);
-
-  return (
-    <AppContext.Consumer>
-      {value => {
-        function saveProject() {
-          if (projectName.trim().length === 0) {
-            setProjectNameError(true);
-            return;
-          }
-
-          value.updateData({
-            type:
-              props.type === "project"
-                ? Types.EDIT_PROJECT
-                : Types.EDIT_REQUEST,
-            project: {
-              name: projectName,
-              url: url
-            }
-          });
-
-          props.closeDialog();
-        }
-
-        return (
-          <DialogSlide
-            open={props.open}
-            title={props.title}
-            leftButtonText="UPDATE"
-            leftButtonAction={saveProject}
-            rightButtonText="CANCEL"
-            rightButtonAction={props.closeDialog}
-            closeDialog={props.closeDialog}
-          >
-            <DialogContent>
-              <DialogContentText id="dialog-slide-description">
-                {props.description}
-              </DialogContentText>
-
-              <TextField
-                variant="outlined"
-                type="text"
-                autoFocus
-                margin="dense"
-                label="Project Name"
-                fullWidth
-                value={projectName}
-                error={projectNameError}
-                onChange={e => {
-                  setProjectName(e.target.value);
-                }}
-                onClick={() => {
-                  setProjectNameError(false);
-                }}
-              />
-              {props.type === "project" ? (
-                <TextField
-                  variant="outlined"
-                  type="text"
-                  autoFocus
-                  margin="dense"
-                  label="Url"
-                  fullWidth
-                  value={url}
-                  onChange={e => {
-                    setUrl(e.target.value);
-                  }}
-                />
-              ) : (
-                <TextField
-                  id="outlined-multiline-static"
-                  label="Payload"
-                  multiline
-                  rows={4}
-                  variant="outlined"
-                  fullWidth={true}
-                  value={url}
-                  spellCheck="false"
-                  onChange={e => {
-                    setUrl(e.target.value);
-                  }}
-                />
-              )}
-            </DialogContent>
-          </DialogSlide>
-        );
-      }}
-    </AppContext.Consumer>
-  );
-}
-
-export function ProjectDeleteDialog(props) {
-  const [projectName, setProjectName] = useState(props.projectName);
-  const [url, setUrl] = useState(props.projectUrl);
-  const [projectNameError, setProjectNameError] = useState(false);
+  const value = useContext(AppContext);
 
   useEffect(() => {
     setProjectName(props.projectName);
     setUrl(props.projectUrl);
   }, [props.projectName, props.projectUrl]);
 
+  function saveProject() {
+    if (projectName.trim().length === 0) {
+      setProjectNameError(true);
+      return;
+    }
+
+    value.updateData({
+      type: props.type,
+      project: {
+        name: projectName,
+        url: url
+      }
+    });
+
+    props.closeDialog();
+  }
+
   return (
-    <AppContext.Consumer>
-      {value => {
-        function saveProject() {
-          if (projectName.trim().length === 0) {
-            setProjectNameError(true);
-            return;
-          }
+    <DialogSlide
+      open={props.open}
+      title={props.title}
+      leftButtonText={props.leftButtonText}
+      leftButtonAction={saveProject}
+      rightButtonText="CANCEL"
+      rightButtonAction={props.closeDialog}
+      closeDialog={props.closeDialog}
+    >
+      <DialogContent>
+        <DialogContentText id="dialog-slide-description">
+          {props.description}
+        </DialogContentText>
 
-          value.updateData({
-            type: Types.EDIT_PROJECT,
-            project: {
-              name: projectName,
-              url: url
-            }
-          });
-
-          props.closeDialog();
-        }
-
-        return (
-          <DialogSlide
-            open={props.open}
-            title="Edit Project"
-            leftButtonText="UPDATE"
-            leftButtonAction={saveProject}
-            rightButtonText="CANCEL"
-            rightButtonAction={props.closeDialog}
-          >
-            <DialogContent>
-              <DialogContentText id="dialog-slide-description">
-                Use a distinct project name to save configuration
-              </DialogContentText>
-
-              <TextField
-                variant="outlined"
-                type="text"
-                autoFocus
-                margin="dense"
-                id="delete-project-name"
-                label="Project Name"
-                fullWidth
-                value={projectName}
-                error={projectNameError}
-                onChange={e => {
-                  setProjectName(e.target.value);
-                }}
-                onClick={() => {
-                  setProjectNameError(false);
-                }}
-              />
-              <TextField
-                variant="outlined"
-                type="text"
-                autoFocus
-                margin="dense"
-                id="delete-project-url"
-                label="Url"
-                fullWidth
-                value={url}
-                onChange={e => {
-                  setUrl(e.target.value);
-                }}
-              />
-            </DialogContent>
-          </DialogSlide>
-        );
-      }}
-    </AppContext.Consumer>
+        <TextField
+          variant="outlined"
+          type="text"
+          autoFocus
+          margin="dense"
+          label={props.labelOne}
+          fullWidth
+          value={projectName}
+          error={projectNameError}
+          onChange={e => {
+            setProjectName(e.target.value);
+          }}
+          onClick={() => {
+            setProjectNameError(false);
+          }}
+        />
+        {props.type === Types.EDIT_REQUEST ||
+        props.type === Types.NEW_REQUEST ? (
+          <TextField
+            id="outlined-multiline-static"
+            label={props.labelTwo}
+            multiline
+            rows={4}
+            variant="outlined"
+            fullWidth={true}
+            value={url}
+            spellCheck="false"
+            onChange={e => {
+              setUrl(e.target.value);
+            }}
+          />
+        ) : (
+          <TextField
+            variant="outlined"
+            type="text"
+            autoFocus
+            margin="dense"
+            label={props.labelTwo}
+            fullWidth
+            value={url}
+            onChange={e => {
+              setUrl(e.target.value);
+            }}
+          />
+        )}
+      </DialogContent>
+    </DialogSlide>
   );
 }
