@@ -8,12 +8,22 @@ p {
   margin: 0px;
 }
 
+pre {
+  padding: 0px;
+  margin: 0px;
+}
+
 .MuiButton-containedPrimary:hover {
   background-color: #fd740f !important;
 }
 
-.navbar {
+.navbar.bg-light {
   height: 50px;
+  background-color: #323232 !important;
+}
+
+.navbar.bg-light a {
+  color: #ff8d3a !important;
 }
 
 .app-columns {
@@ -70,6 +80,7 @@ p {
   height: 1px;
   border-top: 1px solid #ababab;
 }
+
 .receivedMessageHeader {
   background-color: #78ca78;
   padding: 4px;

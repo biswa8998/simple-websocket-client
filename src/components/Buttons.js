@@ -6,6 +6,7 @@ import { IconButton } from "@material-ui/core";
 import DeleteIcon from "@material-ui/icons/Delete";
 import EditIcon from "@material-ui/icons/Edit";
 import RemoveIcon from "@material-ui/icons/Remove";
+import FileCopyIcon from "@material-ui/icons/FileCopy";
 
 function ButtonWithIcon(props) {
   const Icon = props.icon;
@@ -57,6 +58,19 @@ export function RemoveButtonIcon(props) {
       class=""
       buttonRootStyle={classes.columnHeaderIcon}
       buttonTitle=""
+    />
+  );
+}
+
+export function CopyButton(props) {
+  const classes = AppStyles();
+  return (
+    <ButtonWithIcon
+      icon={<FileCopyIcon classes={{ root: classes.messageHeaderIcons }} />}
+      class=""
+      buttonRootStyle={classes.columnHeaderIcon}
+      buttonTitle="Copy to Clipboard"
+      onClick={props.onClick}
     />
   );
 }

@@ -54,7 +54,6 @@ function AppPayload(props) {
             color="primary"
             size="small"
             onClick={() => {
-              console.log(props);
               if (props.hasProject) {
                 props.addToProject(payload);
                 setShowError(false);

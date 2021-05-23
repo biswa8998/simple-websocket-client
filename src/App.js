@@ -20,9 +20,6 @@ import { makeStyles } from "@material-ui/core/styles";
 
 import WS from "./Websocket";
 
-// let appSocket = null;
-let appMessagesGlobal = [];
-
 const theme = createMuiTheme({
   palette: {
     primary: {
@@ -103,10 +100,11 @@ function App() {
   }
 
   function addMessage(message) {
-    message["time"] = getTime();
-    // appMessagesGlobal.splice(0, 0, message);
-
     const newData = { ...existingAppData };
+
+    message["time"] = getTime();
+    message["id"] = newData.App.Projects[pIndex].Messages.length;
+
     newData.App.Projects[pIndex].Messages.splice(0, 0, message);
     setExistingAppData(newData);
   }
@@ -118,13 +116,14 @@ function App() {
   }
 
   function onConnectSuccess(event) {
-    addMessage({
-      type: Types.RECEIVED_MESSAGE,
-      message: "Connected to url " + appUrl
-    });
-
     const newData = { ...existingAppData };
     newData.App.Projects[pIndex].Socket.ConnectionStatus = true;
+
+    addMessage({
+      type: Types.RECEIVED_MESSAGE,
+      message: "Connected to url " + newData.App.Projects[pIndex].Url
+    });
+
     setExistingAppData(newData);
   }
 
@@ -140,7 +139,7 @@ function App() {
   }
 
   function onError(event) {
-    console.log(event);
+    // console.log(event);
   }
 
   function onWsMessage(event) {

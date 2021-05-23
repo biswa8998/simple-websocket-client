@@ -44,3 +44,39 @@ export function getTime() {
 
   return `${dateVal} ${timeVal}`;
 }
+
+export function copyToClipboard(messageId, message) {
+  let range = document.createRange();
+  let selection = document.getSelection();
+
+  function onCopy(event) {
+    event.stopPropagation();
+    event.preventDefault();
+    event.clipboardData.clearData();
+    event.clipboardData.setData("text", message);
+  }
+
+  const copyLocation = document.getElementById(messageId);
+  copyLocation.addEventListener("copy", onCopy);
+
+  range.selectNode(copyLocation);
+  selection.removeAllRanges();
+  selection.addRange(range);
+
+  try {
+    document.execCommand("copy");
+    // selection.removeAllRanges();
+  } catch (error) {
+    try {
+      window.clipboardData.clearData();
+      window.clipboardData.setData("text", message);
+    } catch (err) {
+      window.prompt("Copy from here", message);
+    }
+  } finally {
+    if (selection) {
+      selection.removeAllRanges();
+    }
+    copyLocation.removeEventListener("copy", onCopy);
+  }
+}

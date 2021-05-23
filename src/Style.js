@@ -38,7 +38,7 @@ const AppStyles = makeStyles(theme => ({
     maxWidth: "100%"
   },
   messageFontSize: {
-    fontSize: 10
+    fontSize: 12
   },
   receivedMessage: {
     backgroundColor: "#b3dcc1",
@@ -51,6 +51,12 @@ const AppStyles = makeStyles(theme => ({
     borderRadius: 4,
     marginBottom: 4,
     padding: 8
+  },
+  messageHeaderIcons: {
+    width: 14,
+    height: 18,
+    marginTop: -4,
+    color: "black"
   }
 }));
 

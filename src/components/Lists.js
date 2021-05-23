@@ -6,8 +6,10 @@ import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
 import Divider from "@material-ui/core/Divider";
 
-import { DeleteButtonIcon, EditButtonIcon } from "./Buttons";
+import { DeleteButtonIcon, EditButtonIcon, CopyButton } from "./Buttons";
 import Types from "../dataType";
+
+import { copyToClipboard } from "../Util";
 
 function Item(props) {
   const classes = AppStyles();
@@ -120,10 +122,22 @@ export function MessageLists(props) {
                 disableTypography={true}
                 classes={{ root: classes.messageFontSize }}
               >
-                <div className={messageHeaderStyle}>{m.time}</div>
-                <div>
-                  {m.message.split("\n").map((e, i) => {
-                    return <div key={`m${i}`}>{e}</div>;
+                <div className={messageHeaderStyle}>
+                  {m.time}
+                  <CopyButton
+                    onClick={() => {
+                      copyToClipboard(`message-${i}`, m.message);
+                    }}
+                  />
+                  {/* <CopyButton /> */}
+                </div>
+                <div id={`message-${i}`}>
+                  {m.message.split("\n").map((e, j) => {
+                    return (
+                      <div key={`m${j}`}>
+                        <pre>{e}</pre>
+                      </div>
+                    );
                   })}
                 </div>
               </ListItemText>
@@ -131,32 +145,6 @@ export function MessageLists(props) {
           );
         })
       )}
-      {/* <ListItem classes={{ root: classes.receivedMessage }}>
-        <ListItemText
-          disableTypography={true}
-          classes={{ root: classes.messageFontSize }}
-        >
-          <div className="receivedMessageHeader">21-March-2021 20:20:20</div>
-          <div>
-            <div>asdasdasdasd</div>
-            <div>asdasdasdasd</div>
-            <div>asdasdasdasd</div>
-            <div>asdasdasdasd</div>
-          </div>
-        </ListItemText>
-      </ListItem>
-      <ListItem classes={{ root: classes.sentMessage }}>
-        <ListItemText
-          disableTypography={true}
-          classes={{ root: classes.messageFontSize }}
-        >
-          <div className="sentMessageHeader">21-March-2021 20:20:20</div>
-          <div>asdasdasdasd</div>
-          <div>asdasdasdasd</div>
-          <div>asdasdasdasd</div>
-          <div>asdasdasdasd</div>
-        </ListItemText>
-      </ListItem> */}
     </List>
   );
 }
