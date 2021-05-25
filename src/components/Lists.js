@@ -6,7 +6,12 @@ import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
 import Divider from "@material-ui/core/Divider";
 
-import { DeleteButtonIcon, EditButtonIcon, CopyButton } from "./Buttons";
+import {
+  DeleteButtonIcon,
+  EditButtonIcon,
+  CopyButton,
+  JsonBeautyButton
+} from "./Buttons";
 import Types from "../dataType";
 
 import { copyToClipboard } from "../Util";
@@ -94,6 +99,29 @@ export function ButtonedLists(props) {
 
 export function MessageLists(props) {
   const classes = AppStyles();
+  const [beautifiedIds, setBeautifiedIds] = useState([]);
+  const [msgLength, setMesLength] = useState(0);
+
+  useEffect(() => {
+    setMesLength(msgLength);
+    // eslint-disable-next-line
+  }, [props.messages.length]);
+
+  function beautify(msgId, alreadyBeautified) {
+    let newArr = [];
+    let newBeautifiedIds = [];
+    if (!alreadyBeautified) {
+      newBeautifiedIds = [...beautifiedIds];
+      newBeautifiedIds.push(msgId);
+    } else {
+      newBeautifiedIds = [...beautifiedIds];
+      newBeautifiedIds.splice(newArr.indexOf(msgId), 1);
+    }
+
+    // setMessagesArr(newArr);
+    setBeautifiedIds(newBeautifiedIds);
+  }
+
   return (
     <List
       className={classes.list}
@@ -105,8 +133,9 @@ export function MessageLists(props) {
           <ListItemText>Messages will be logged here</ListItemText>
         </ListItem>
       ) : (
-        props.messages.map((m, i) => {
+        props.messages.map((m, msgIndex) => {
           let rootStyle, messageHeaderStyle;
+
           if (m.type === Types.SENT_MESSAGE) {
             rootStyle = classes.sentMessage;
             messageHeaderStyle = "sentMessageHeader";
@@ -116,30 +145,62 @@ export function MessageLists(props) {
             messageHeaderStyle = "receivedMessageHeader";
           }
 
+          let isJson = false;
+          try {
+            JSON.parse(m.message);
+            isJson = true;
+          } catch (ex) {
+            // console.log(m.message);
+          }
+
+          let msg = m.message;
+          let beautified = false;
+          if (beautifiedIds.indexOf(m.id) !== -1) {
+            msg = JSON.stringify(JSON.parse(m.message), undefined, 4);
+            beautified = true;
+          }
+
+          let MSG = null;
+
+          if (msg.indexOf("\n") === -1) {
+            MSG = (
+              <div>
+                <pre>{msg}</pre>
+              </div>
+            );
+          } else {
+            MSG = msg.split("\n").map((e, j) => {
+              return (
+                <div key={`m${j}`}>
+                  <pre>{e}</pre>
+                </div>
+              );
+            });
+          }
+
           return (
-            <ListItem classes={{ root: rootStyle }} key={i}>
+            <ListItem classes={{ root: rootStyle }} key={m.id}>
               <ListItemText
                 disableTypography={true}
                 classes={{ root: classes.messageFontSize }}
               >
                 <div className={messageHeaderStyle}>
                   {m.time}
+
                   <CopyButton
                     onClick={() => {
-                      copyToClipboard(`message-${i}`, m.message);
+                      copyToClipboard(`message-${m.id}`, msg);
                     }}
                   />
-                  {/* <CopyButton /> */}
+                  {isJson && (
+                    <JsonBeautyButton
+                      onClick={() => {
+                        beautify(m.id, beautified);
+                      }}
+                    />
+                  )}
                 </div>
-                <div id={`message-${i}`}>
-                  {m.message.split("\n").map((e, j) => {
-                    return (
-                      <div key={`m${j}`}>
-                        <pre>{e}</pre>
-                      </div>
-                    );
-                  })}
-                </div>
+                <div id={`message-${m.id}`}>{MSG}</div>
               </ListItemText>
             </ListItem>
           );

@@ -103,7 +103,7 @@ function App() {
     const newData = { ...existingAppData };
 
     message["time"] = getTime();
-    message["id"] = newData.App.Projects[pIndex].Messages.length;
+    message["id"] = new Date().getTime();
 
     newData.App.Projects[pIndex].Messages.splice(0, 0, message);
     setExistingAppData(newData);
@@ -121,7 +121,7 @@ function App() {
 
     addMessage({
       type: Types.RECEIVED_MESSAGE,
-      message: "Connected to url " + newData.App.Projects[pIndex].Url
+      message: JSON.stringify({ connected: newData.App.Projects[pIndex].Url })
     });
 
     setExistingAppData(newData);
@@ -314,11 +314,11 @@ function App() {
     return AppStyles;
   }
 
-  console.log(
-    existingAppData,
-    pIndex,
-    existingAppData.App.Projects[pIndex].Messages
-  );
+  // console.log(
+  //   existingAppData,
+  //   pIndex,
+  //   existingAppData.App.Projects[pIndex].Messages
+  // );
   return (
     <ThemeProvider theme={theme}>
       <AppContext.Provider value={AppData}>

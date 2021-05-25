@@ -7,6 +7,7 @@ import DeleteIcon from "@material-ui/icons/Delete";
 import EditIcon from "@material-ui/icons/Edit";
 import RemoveIcon from "@material-ui/icons/Remove";
 import FileCopyIcon from "@material-ui/icons/FileCopy";
+import CodeIcon from "@material-ui/icons/Code";
 
 function ButtonWithIcon(props) {
   const Icon = props.icon;
@@ -70,6 +71,19 @@ export function CopyButton(props) {
       class=""
       buttonRootStyle={classes.columnHeaderIcon}
       buttonTitle="Copy to Clipboard"
+      onClick={props.onClick}
+    />
+  );
+}
+
+export function JsonBeautyButton(props) {
+  const classes = AppStyles();
+  return (
+    <ButtonWithIcon
+      icon={<CodeIcon classes={{ root: classes.messageHeaderIcons }} />}
+      class=""
+      buttonRootStyle={classes.columnHeaderIcon}
+      buttonTitle="Beautify"
       onClick={props.onClick}
     />
   );
