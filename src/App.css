@@ -13,12 +13,45 @@ pre {
   margin: 0px;
 }
 
+button {
+  font-weight: 600;
+}
+
+/* Scrollbar*/
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #a5a5a545;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #444444;
+  border-radius: 8px;
+  border: 3px solid #a5a5a5;
+}
+textarea::-webkit-scrollbar:hover {
+  cursor: pointer;
+}
+/**/
+
 .MuiButton-containedPrimary:hover {
   background-color: #fd740f !important;
 }
 
-.navbar.bg-light {
-  height: 50px;
+.MuiList-padding {
+  padding: 0px !important;
+}
+
+.MuiListItem-root.Mui-selected,
+.MuiListItem-root.Mui-selected:hover {
+  background-color: #ff8d3aa6 !important;
+}
+
+.app-navbar {
+  height: 45px;
   background-color: #323232 !important;
 }
 
@@ -43,14 +76,14 @@ pre {
   background-color: #ff8d3a;
   font-size: 1.2em;
   border-radius: 2px;
-  float: left;
-  width: 100%;
+  /* float: left;
+  width: 100%; */
   color: #fff;
 }
 
 .project-column-title {
   width: 100%;
-  float: left;
+  /* float: left; */
 }
 
 .project-column-icon {
@@ -68,6 +101,10 @@ pre {
 .app-payload-wrapper,
 .app-messages {
   padding: 8px 20px;
+}
+
+.app-request-wrapper .MuiOutlinedInput-input {
+  padding-right: 106px;
 }
 
 .save-this-request {
@@ -92,4 +129,8 @@ pre {
   padding: 4px;
   margin-bottom: 4px;
   border-radius: 4px;
+}
+
+.message-text-wrapper {
+  overflow-x: auto;
 }

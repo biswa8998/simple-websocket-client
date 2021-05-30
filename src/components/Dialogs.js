@@ -47,28 +47,28 @@ function DialogSlide(props) {
 }
 
 export function EditDialog(props) {
-  const [projectName, setProjectName] = useState(props.projectName);
-  const [url, setUrl] = useState(props.projectUrl);
-  const [projectNameError, setProjectNameError] = useState(false);
+  const [inputBoxOneValue, setInputBoxOne] = useState(props.inputBoxOneValue);
+  const [inputBoxTwoValue, setInputBoxTwo] = useState(props.inputBoxTwoValue);
+  const [inputBoxOneError, setInputBoxOneError] = useState(false);
 
   const value = useContext(AppContext);
 
   useEffect(() => {
-    setProjectName(props.projectName);
-    setUrl(props.projectUrl);
-  }, [props.projectName, props.projectUrl]);
+    setInputBoxOne(props.inputBoxOneValue);
+    setInputBoxTwo(props.inputBoxTwoValue);
+  }, [props.inputBoxOneValue, props.inputBoxTwoValue]);
 
   function saveProject() {
-    if (projectName.trim().length === 0) {
-      setProjectNameError(true);
+    if (inputBoxOneValue.trim().length === 0) {
+      setInputBoxOneError(true);
       return;
     }
 
     value.updateData({
       type: props.type,
       project: {
-        name: projectName,
-        url: url
+        name: inputBoxOneValue,
+        url: inputBoxTwoValue
       }
     });
 
@@ -93,17 +93,19 @@ export function EditDialog(props) {
         <TextField
           variant="outlined"
           type="text"
-          autoFocus
+          autoFocus={
+            props.type === Types.NEW_REQUEST || props.type === Types.NEW_PROJECT
+          }
           margin="dense"
           label={props.labelOne}
           fullWidth
-          value={projectName}
-          error={projectNameError}
+          value={inputBoxOneValue}
+          error={inputBoxOneError}
           onChange={e => {
-            setProjectName(e.target.value);
+            setInputBoxOne(e.target.value);
           }}
           onClick={() => {
-            setProjectNameError(false);
+            setInputBoxOneError(false);
           }}
         />
         {props.type === Types.EDIT_REQUEST ||
@@ -115,26 +117,71 @@ export function EditDialog(props) {
             rows={4}
             variant="outlined"
             fullWidth={true}
-            value={url}
+            value={inputBoxTwoValue}
             spellCheck="false"
             onChange={e => {
-              setUrl(e.target.value);
+              setInputBoxTwo(e.target.value);
             }}
+            disabled={props.canChangeValue}
+            autoFocus={
+              props.type === Types.EDIT_REQUEST ||
+              props.type === Types.EDIT_PROJECT
+            }
           />
         ) : (
           <TextField
             variant="outlined"
             type="text"
-            autoFocus
             margin="dense"
             label={props.labelTwo}
             fullWidth
-            value={url}
+            value={inputBoxTwoValue}
             onChange={e => {
-              setUrl(e.target.value);
+              setInputBoxTwo(e.target.value);
             }}
+            disabled={!props.contentChangeEnabled}
+            autoFocus={
+              props.type === Types.EDIT_REQUEST ||
+              props.type === Types.EDIT_PROJECT
+            }
           />
         )}
+      </DialogContent>
+    </DialogSlide>
+  );
+}
+
+export function DeleteDialog(props) {
+  const value = useContext(AppContext);
+
+  // useEffect(() => {
+  //   setInputBoxOne(props.inputBoxOneValue);
+  //   setInputBoxTwo(props.inputBoxTwoValue);
+  // }, [props.inputBoxOneValue, props.inputBoxTwoValue]);
+
+  function deleteItem() {
+    value.updateData({
+      type: props.type,
+      id: props.itemId
+    });
+
+    props.closeDialog();
+  }
+
+  return (
+    <DialogSlide
+      open={props.open}
+      title={props.title}
+      leftButtonText={props.leftButtonText}
+      leftButtonAction={deleteItem}
+      rightButtonText="CANCEL"
+      rightButtonAction={props.closeDialog}
+      closeDialog={props.closeDialog}
+    >
+      <DialogContent>
+        <DialogContentText id="dialog-slide-description">
+          {props.description}
+        </DialogContentText>
       </DialogContent>
     </DialogSlide>
   );

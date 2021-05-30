@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from "react";
-import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
-
-import { Navbar } from "react-bootstrap";
-import { Grid } from "@material-ui/core";
+import AppStyles from "./Style";
+import { Grid, AppBar, Typography } from "@material-ui/core";
 import { createMuiTheme, ThemeProvider } from "@material-ui/core/styles";
 import AppProjects from "./components/AppProjects";
 import AppRequests from "./components/AppRequests";
-import { EditDialog } from "./components/Dialogs";
+import { EditDialog, DeleteDialog } from "./components/Dialogs";
 import AppContext, { appData } from "./context/appContext";
 import Types from "./dataType";
 import AppConnection from "./components/AppConnection";
@@ -36,10 +34,13 @@ const theme = createMuiTheme({
 });
 
 function AppNavbar() {
+  const classes = AppStyles();
   return (
-    <Navbar bg="light" expand="lg">
-      <Navbar.Brand href="#home">Simple WebSocket Client</Navbar.Brand>
-    </Navbar>
+    <AppBar position="static" className="app-navbar">
+      <Typography variant="h6" classes={{ root: classes.appTitle }}>
+        Basic Websocket Client
+      </Typography>
+    </AppBar>
   );
 }
 
@@ -76,6 +77,7 @@ function App() {
   const [lastAction, setLastAction] = useState({});
   const [showProjectEditDialog, setShowProjectEditDialog] = useState(false);
   const [showRequestEditDialog, setShowRequestEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // eslint-disable-next-line
   const [refresh, setRefresh] = useState(false);
@@ -99,11 +101,15 @@ function App() {
     setShowRequestEditDialog(!showRequestEditDialog);
   }
 
+  function toggleDeleteDialog() {
+    setShowDeleteDialog(!showDeleteDialog);
+  }
+
   function addMessage(message) {
     const newData = { ...existingAppData };
 
     message["time"] = getTime();
-    message["id"] = new Date().getTime();
+    message["id"] = new Date().getTime() + Math.random() * 10000;
 
     newData.App.Projects[pIndex].Messages.splice(0, 0, message);
     setExistingAppData(newData);
@@ -118,10 +124,10 @@ function App() {
   function onConnectSuccess(event) {
     const newData = { ...existingAppData };
     newData.App.Projects[pIndex].Socket.ConnectionStatus = true;
-
+    const theUrl = event.target.url;
     addMessage({
       type: Types.RECEIVED_MESSAGE,
-      message: JSON.stringify({ connected: newData.App.Projects[pIndex].Url })
+      message: `Connected to server ${theUrl}`
     });
 
     setExistingAppData(newData);
@@ -130,7 +136,7 @@ function App() {
   function onCloseSuccess(event) {
     addMessage({
       type: Types.RECEIVED_MESSAGE,
-      message: "Connection closed to url " + appUrl
+      message: `Connection closed to url ${event.target.url}`
     });
     const newData = { ...existingAppData };
     newData.App.Projects[pIndex].Socket.Connection = null;
@@ -153,17 +159,27 @@ function App() {
   function onClickConnect(url) {
     if (!existingAppData.App.Projects[pIndex].Socket.ConnectionStatus) {
       // request for connection
+      setAppUrl(url);
       addMessage({
         type: Types.SENT_MESSAGE,
-        message: "Connecting to url " + url
+        message: `Connecting to server ${url}`
       });
 
-      // Make Websocket instance
-      const appSocket = new WS(url);
-      appSocket.addOnOpen(onConnectSuccess);
-      appSocket.addOnClose(onCloseSuccess);
-      appSocket.addOnMessage(onWsMessage);
-      appSocket.addOnError(onError);
+      let appSocket = null;
+      try {
+        // Make Websocket instance
+        appSocket = new WS(url);
+        appSocket.addOnOpen(onConnectSuccess);
+        appSocket.addOnClose(onCloseSuccess);
+        appSocket.addOnMessage(onWsMessage);
+        appSocket.addOnError(onError);
+      } catch (error) {
+        addMessage({
+          type: Types.RECEIVED_MESSAGE,
+          message: error.message
+        });
+        return;
+      }
 
       const newData = { ...existingAppData };
       newData.App.Projects[pIndex].Socket.Connection = appSocket;
@@ -175,8 +191,6 @@ function App() {
       });
       existingAppData.App.Projects[pIndex].Socket.Connection.close();
     }
-
-    setAppUrl(url);
   }
 
   function onClickSend(payload) {
@@ -211,7 +225,11 @@ function App() {
   function onRequestClick(i) {
     setRequestIndex(i);
   }
-
+  /**
+   * ========================================================
+   * ================== Update App Data =====================
+   * ========================================================
+   */
   function updateAppData(data) {
     if (data.type === Types.NEW_PROJECT) {
       // Check if first project being saved
@@ -223,6 +241,9 @@ function App() {
           data.project.name;
         newData.App.Projects[newData.App.Projects.length - 1].Url =
           data.project.url;
+        newData.App.Projects[newData.App.Projects.length - 1].Socket = {
+          ...newData.App.Projects[0].Socket
+        };
       } else {
         newData.App.Projects[newData.App.Projects.length - 1].Name =
           data.project.name;
@@ -236,6 +257,16 @@ function App() {
         };
       }
 
+      // CLean the untitled project
+      if (newData.InitialState) {
+        newData.App.Projects[0].Name = "Untitled";
+        newData.App.Projects[0].Url = "";
+        newData.App.Projects[0].Requests = [];
+        newData.App.Projects[0].Messages = [];
+        newData.App.Projects[0].Socket.ConnectionStatus = false;
+        newData.App.Projects[0].Socket.Connection = null;
+      }
+
       newData.InitialState = false;
       saveAppData(newData);
       setProjectIndex(newData.App.Projects.length - 1);
@@ -246,9 +277,11 @@ function App() {
       newData.App.Projects[pIndex].Url = data.project.url;
       saveAppData(newData);
     } else if (data.type === Types.DELETE_PROJECT) {
-      const actualProjectIndex = existingAppData.InitialState
-        ? data.id
-        : data.id + 1;
+      // const actualProjectIndex = existingAppData.InitialState
+      //   ? data.id
+      //   : data.id + 1;
+
+      const actualProjectIndex = data.id;
 
       let newData = { ...existingAppData };
 
@@ -258,7 +291,18 @@ function App() {
         newData.InitialState = true;
       }
 
-      setProjectIndex(0);
+      if (actualProjectIndex === pIndex) {
+        if (newData.App.Projects.length > actualProjectIndex) {
+          setProjectIndex(actualProjectIndex);
+        } else {
+          setProjectIndex(actualProjectIndex - 1);
+        }
+      } else {
+        if (actualProjectIndex < pIndex) {
+          setProjectIndex(pIndex - 1);
+        }
+      }
+
       saveAppData(newData);
     } else if (data.type === Types.NEW_REQUEST) {
       let newData = Object.assign({}, existingAppData);
@@ -275,6 +319,7 @@ function App() {
       });
       newData.App.Projects[pIndex].Requests = requestArray;
       saveAppData(newData);
+      setRequestIndex(newData.App.Projects[pIndex].Requests.length - 1);
     } else if (data.type === Types.EDIT_REQUEST) {
       let newData = { ...existingAppData };
       newData.App.Projects[pIndex].Requests[rIndex].Name = data.project.name;
@@ -286,9 +331,22 @@ function App() {
         [],
         existingAppData.App.Projects[pIndex].Requests
       );
+
+      const actualRequestIndex = data.id;
+
       newData.App.Projects[pIndex].Requests.splice(data.id, 1);
 
-      setRequestIndex(0);
+      if (actualRequestIndex === rIndex) {
+        if (newData.App.Projects[pIndex].Requests.length > actualRequestIndex) {
+          setRequestIndex(actualRequestIndex);
+        } else {
+          setRequestIndex(actualRequestIndex - 1);
+        }
+      } else {
+        if (actualRequestIndex < pIndex) {
+          setRequestIndex(pIndex - 1);
+        }
+      }
 
       saveAppData(newData);
     }
@@ -314,11 +372,25 @@ function App() {
     return AppStyles;
   }
 
-  // console.log(
-  //   existingAppData,
-  //   pIndex,
-  //   existingAppData.App.Projects[pIndex].Messages
-  // );
+  let deleteDescription;
+  if (showDeleteDialog) {
+    // console.log(lastAction);
+    if (lastAction.type === Types.DELETE_PROJECT) {
+      deleteDescription =
+        "Confirmation to delete project " +
+        existingAppData.App.Projects[lastAction.data.deleteId].Name;
+      // deleteId = lastAction.data.deleteId;
+    }
+    if (lastAction.type === Types.DELETE_REQUEST) {
+      deleteDescription =
+        "Confirmation to delete request " +
+        existingAppData.App.Projects[pIndex].Requests[lastAction.data.deleteId]
+          .Name;
+      // deleteId = lastAction.data.deleteId;
+    }
+  }
+
+  // console.log(pIndex, existingAppData.App.Projects[pIndex]);
   return (
     <ThemeProvider theme={theme}>
       <AppContext.Provider value={AppData}>
@@ -328,7 +400,7 @@ function App() {
             {/* List all the projects */}
             <AppProjects
               projects={
-                existingAppData.App.Projects.length > 1
+                !existingAppData.InitialState
                   ? existingAppData.App.Projects.slice(1)
                   : existingAppData.App.Projects
               }
@@ -337,8 +409,15 @@ function App() {
                 setLastAction({ type: Types.EDIT_PROJECT, data: null });
                 toggleProjectEditDialog();
               }}
-              onProjectDelete={data => {
-                updateAppData({ type: Types.DELETE_PROJECT, id: data });
+              onProjectDelete={id => {
+                setLastAction({
+                  type: Types.DELETE_PROJECT,
+                  data: {
+                    deleteId: id + 1
+                  }
+                });
+                // updateAppData({ type: Types.DELETE_PROJECT, id: data });
+                toggleDeleteDialog();
               }}
               editAndDelete={existingAppData.App.Projects.length > 1}
               selectedProjectIndex={
@@ -353,12 +432,15 @@ function App() {
                 setLastAction({ type: Types.EDIT_REQUEST, data: null });
                 toggleRequestEditDialog();
               }}
-              onRequestDelete={data => {
-                updateAppData({
+              onRequestDelete={id => {
+                setLastAction({
                   type: Types.DELETE_REQUEST,
-                  id: data.id,
-                  project: pIndex
+                  data: {
+                    deleteId: id
+                  }
                 });
+                // updateAppData({ type: Types.DELETE_PROJECT, id: data });
+                toggleDeleteDialog();
               }}
               selectedRequestIndex={rIndex}
             />
@@ -409,7 +491,6 @@ function App() {
             <EditDialog
               open={showProjectEditDialog}
               closeDialog={toggleProjectEditDialog}
-              projectId={pIndex}
               type={lastAction.type}
               title={
                 lastAction.type === Types.NEW_PROJECT
@@ -422,15 +503,18 @@ function App() {
                 lastAction.type === Types.NEW_PROJECT ? "CREATE" : "UPDATE"
               }
               description="Use a distinct project name to save configuration"
-              projectName={
+              inputBoxOneValue={
                 lastAction.type === Types.NEW_PROJECT
                   ? ""
                   : existingAppData.App.Projects[pIndex].Name
               }
-              projectUrl={
+              inputBoxTwoValue={
                 lastAction.type === Types.NEW_PROJECT
                   ? appUrl
                   : existingAppData.App.Projects[pIndex].Url
+              }
+              contentChangeEnabled={
+                !existingAppData.App.Projects[pIndex].Socket.ConnectionStatus
               }
             />
           )}
@@ -439,7 +523,6 @@ function App() {
               open={showRequestEditDialog}
               closeDialog={toggleRequestEditDialog}
               type={lastAction.type}
-              projectId={rIndex}
               title={
                 lastAction.type === Types.NEW_REQUEST
                   ? "Add Request"
@@ -451,17 +534,32 @@ function App() {
                 lastAction.type === Types.NEW_REQUEST ? "CREATE" : "UPDATE"
               }
               description="Use a distinct request name to save configuration"
-              projectName={
+              inputBoxOneValue={
                 lastAction.type === Types.NEW_REQUEST
                   ? ""
                   : existingAppData.App.Projects[pIndex].Requests[rIndex].Name
               }
-              projectUrl={
+              inputBoxTwoValue={
                 lastAction.type === Types.NEW_REQUEST
                   ? lastAction.data
                   : existingAppData.App.Projects[pIndex].Requests[rIndex]
                       .Payload
               }
+            />
+          )}
+          {showDeleteDialog && (
+            <DeleteDialog
+              open={showDeleteDialog}
+              closeDialog={toggleDeleteDialog}
+              type={lastAction.type}
+              itemId={lastAction.data.deleteId}
+              title={
+                lastAction.type === Types.DELETE_REQUEST
+                  ? "Delete Request"
+                  : "Delete Project"
+              }
+              leftButtonText="DELETE"
+              description={deleteDescription}
             />
           )}
         </div>

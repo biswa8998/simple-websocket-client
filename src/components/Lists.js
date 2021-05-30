@@ -200,7 +200,9 @@ export function MessageLists(props) {
                     />
                   )}
                 </div>
-                <div id={`message-${m.id}`}>{MSG}</div>
+                <div id={`message-${m.id}`} className="message-text-wrapper">
+                  {MSG}
+                </div>
               </ListItemText>
             </ListItem>
           );

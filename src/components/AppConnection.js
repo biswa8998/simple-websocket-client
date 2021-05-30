@@ -28,6 +28,7 @@ function AppConnection(props) {
     <Grid id="app-request-wrapper" className="app-request-wrapper">
       <Grid container direction="row" justify="flex-start" alignItems="center">
         <TextField
+          autoFocus
           id="outlined-basic"
           label="Websocket URL"
           variant="outlined"

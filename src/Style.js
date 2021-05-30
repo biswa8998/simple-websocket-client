@@ -1,6 +1,11 @@
 import { makeStyles } from "@material-ui/core/styles";
 
 const AppStyles = makeStyles(theme => ({
+  appTitle: {
+    color: "#ff8d3a !important",
+    paddingTop: 4,
+    paddingLeft: 12
+  },
   columnHeaderIcon: {
     float: "right",
     color: "#fff"
@@ -27,9 +32,9 @@ const AppStyles = makeStyles(theme => ({
     color: "#409dca"
   },
   buttonConnect: {
-    position: "absolute",
-    right: 23,
-    padding: 16
+    position: "absolute !important",
+    right: 22,
+    padding: "16px !important"
   },
   urlErrorText: {
     marginLeft: 20
@@ -53,8 +58,8 @@ const AppStyles = makeStyles(theme => ({
     padding: 8
   },
   messageHeaderIcons: {
-    width: 14,
-    height: 18,
+    width: "14px !important",
+    height: "18px !important",
     marginTop: -4,
     color: "black"
   }
