@@ -1,10 +1,13 @@
 import React from "react";
+import { connect } from "react-redux";
 
 import { Grid } from "@material-ui/core";
 
 import AppColumnHeaders from "./AppColumnHeaders";
 
 import { ButtonedLists } from "./Lists";
+
+import * as ActionTypes from "../actions";
 
 function AppProjects(props) {
   return (
@@ -14,11 +17,11 @@ function AppProjects(props) {
         <div className="project-lister">
           <ButtonedLists
             Items={props.projects}
-            onClick={props.onProjectClick}
-            onClickEdit={props.onProjectEdit}
+            onClick={props.changeProject}
+            onClickEdit={props.showEditProjectModal}
             onClickDelete={props.onProjectDelete}
-            editAndDelete={props.editAndDelete}
-            selected={props.selectedProjectIndex}
+            editAndDelete={0 !== props.savedProjects}
+            selected={props.selectedProject}
           />
         </div>
       </div>
@@ -26,4 +29,20 @@ function AppProjects(props) {
   );
 }
 
-export default AppProjects;
+const mapStateToProps = state => {
+  const { projects, selectedProject, savedProjects } = state;
+  return { projects, selectedProject, savedProjects };
+};
+
+const mapDispatchToProps = dispatch => {
+  return {
+    changeProject: data => dispatch(ActionTypes.changeProject(data)),
+    showEditProjectModal: data =>
+      dispatch(ActionTypes.showEditProjectModal(data))
+  };
+};
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(AppProjects);

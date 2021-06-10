@@ -1,22 +1,30 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import "./App.css";
 import AppStyles from "./Style";
 import { Grid, AppBar, Typography } from "@material-ui/core";
 import { createMuiTheme, ThemeProvider } from "@material-ui/core/styles";
 import AppProjects from "./components/AppProjects";
 import AppRequests from "./components/AppRequests";
-import { EditDialog, DeleteDialog } from "./components/Dialogs";
+import { EditModal, DeleteDialog } from "./components/modals/CustomModals";
 import AppContext, { appData } from "./context/appContext";
 import Types from "./dataType";
 import AppConnection from "./components/AppConnection";
 import AppPayload from "./components/AppPayload";
-import { MessageLists } from "./components/Lists";
+import ProjectMesages from "./components/ProjectMessages";
 
-import { setLocalStorage, getLocalStorage, getTime } from "./Util";
+import { setLocalStorage, /*getLocalStorage,*/ getTime } from "./Util";
 
 import { makeStyles } from "@material-ui/core/styles";
 
 import WS from "./Websocket";
+
+import CreateProjectModal from "./components/modals/CreateProjectModal";
+import EditProjectModal from "./components/modals/EditProjectModal";
+import CreateRequestModal from "./components/modals/CreateRequestModal";
+
+import { connect } from "react-redux";
+import * as ActionTypes from "./types/actionTypes";
+import * as ModalTypes from "./types/modalTypes";
 
 const theme = createMuiTheme({
   palette: {
@@ -44,35 +52,36 @@ function AppNavbar() {
   );
 }
 
-function App() {
+function App(props) {
   const [existingAppData, setExistingAppData] = useState(appData);
   const [pIndex, setProjectIndex] = useState(0);
   const [rIndex, setRequestIndex] = useState(0);
+  // const { currentOpenModal } = props;
 
-  useEffect(() => {
-    const savedData = getLocalStorage("data");
-    let applicationData,
-      preSelectedProj = 0,
-      preSelectedRequest = 0;
+  // useEffect(() => {
+  //   const savedData = getLocalStorage("data");
+  //   let applicationData,
+  //     preSelectedProj = 0,
+  //     preSelectedRequest = 0;
 
-    if (savedData) {
-      applicationData = savedData;
-      if (applicationData.App.Projects.length > 1) {
-        preSelectedProj = 1;
-        if (applicationData.App.Projects[1].Requests.length > 0) {
-          preSelectedRequest = 0;
-        }
-      }
-    } else {
-      applicationData = appData;
-    }
+  //   if (savedData) {
+  //     applicationData = savedData;
+  //     if (applicationData.App.Projects.length > 1) {
+  //       preSelectedProj = 1;
+  //       if (applicationData.App.Projects[1].Requests.length > 0) {
+  //         preSelectedRequest = 0;
+  //       }
+  //     }
+  //   } else {
+  //     applicationData = appData;
+  //   }
 
-    setExistingAppData(applicationData);
-    setProjectIndex(preSelectedProj);
-    setRequestIndex(preSelectedRequest);
-  }, []);
+  //   setExistingAppData(applicationData);
+  //   setProjectIndex(preSelectedProj);
+  //   setRequestIndex(preSelectedRequest);
+  // }, []);
 
-  const [appUrl, setAppUrl] = useState("");
+  // const [appUrl, setAppUrl] = useState("");
 
   const [lastAction, setLastAction] = useState({});
   const [showProjectEditDialog, setShowProjectEditDialog] = useState(false);
@@ -116,8 +125,8 @@ function App() {
   }
 
   function saveNewProject(url) {
-    setAppUrl(url);
-    setLastAction({ type: Types.NEW_PROJECT, data: null });
+    // setAppUrl(url);
+    setLastAction({ type: Types.CREATE_PROJECT, data: null });
     toggleProjectEditDialog();
   }
 
@@ -159,7 +168,7 @@ function App() {
   function onClickConnect(url) {
     if (!existingAppData.App.Projects[pIndex].Socket.ConnectionStatus) {
       // request for connection
-      setAppUrl(url);
+      // setAppUrl(url);
       addMessage({
         type: Types.SENT_MESSAGE,
         message: `Connecting to server ${url}`
@@ -209,7 +218,7 @@ function App() {
   }
 
   function addRequestToProject(payload) {
-    setLastAction({ type: Types.NEW_REQUEST, data: payload });
+    setLastAction({ type: Types.CREATE_REQUEST, data: payload });
     toggleRequestEditDialog();
   }
 
@@ -231,7 +240,7 @@ function App() {
    * ========================================================
    */
   function updateAppData(data) {
-    if (data.type === Types.NEW_PROJECT) {
+    if (data.type === Types.CREATE_PROJECT) {
       // Check if first project being saved
       let newData = { ...existingAppData };
       let newProject = { ...newData.App.Projects[0] };
@@ -304,7 +313,7 @@ function App() {
       }
 
       saveAppData(newData);
-    } else if (data.type === Types.NEW_REQUEST) {
+    } else if (data.type === Types.CREATE_REQUEST) {
       let newData = Object.assign({}, existingAppData);
 
       // Check if this is unsaved untitled project
@@ -399,11 +408,6 @@ function App() {
           <Grid container>
             {/* List all the projects */}
             <AppProjects
-              projects={
-                !existingAppData.InitialState
-                  ? existingAppData.App.Projects.slice(1)
-                  : existingAppData.App.Projects
-              }
               onProjectClick={onProjectClick}
               onProjectEdit={data => {
                 setLastAction({ type: Types.EDIT_PROJECT, data: null });
@@ -426,7 +430,7 @@ function App() {
             />
             {/* List all the requests of selected project */}
             <AppRequests
-              requests={existingAppData.App.Projects[pIndex].Requests}
+              requests={[]}
               onRequestClick={onRequestClick}
               onRequestEdit={data => {
                 setLastAction({ type: Types.EDIT_REQUEST, data: null });
@@ -450,10 +454,6 @@ function App() {
                 <AppConnection
                   saveNewProject={saveNewProject}
                   onClickConnect={onClickConnect}
-                  urlValue={existingAppData.App.Projects[pIndex].Url}
-                  connected={
-                    existingAppData.App.Projects[pIndex].Socket.ConnectionStatus
-                  }
                 />
                 <AppPayload
                   onClickSend={onClickSend}
@@ -479,37 +479,36 @@ function App() {
                   }}
                 >
                   <Grid container>
-                    <MessageLists
-                      messages={existingAppData.App.Projects[pIndex].Messages}
-                    />
+                    <ProjectMesages />
                   </Grid>
                 </Grid>
               </Grid>
             </Grid>
           </Grid>
-          {showProjectEditDialog && (
+          {/* {(currentOpenModal === ModalTypes.PROJECT_EDIT_MODAL ||
+            currentOpenModal === ModalTypes.REQUEST_EDIT_MODAL) && (
             <EditDialog
               open={showProjectEditDialog}
               closeDialog={toggleProjectEditDialog}
               type={lastAction.type}
               title={
-                lastAction.type === Types.NEW_PROJECT
+                lastAction.type === Types.CREATE_PROJECT
                   ? "Create New Project"
                   : "Edit Project"
               }
               labelOne="Project Name"
               labelTwo="Url"
               leftButtonText={
-                lastAction.type === Types.NEW_PROJECT ? "CREATE" : "UPDATE"
+                lastAction.type === Types.CREATE_PROJECT ? "CREATE" : "UPDATE"
               }
               description="Use a distinct project name to save configuration"
               inputBoxOneValue={
-                lastAction.type === Types.NEW_PROJECT
+                lastAction.type === Types.CREATE_PROJECT
                   ? ""
                   : existingAppData.App.Projects[pIndex].Name
               }
               inputBoxTwoValue={
-                lastAction.type === Types.NEW_PROJECT
+                lastAction.type === Types.CREATE_PROJECT
                   ? appUrl
                   : existingAppData.App.Projects[pIndex].Url
               }
@@ -517,37 +516,46 @@ function App() {
                 !existingAppData.App.Projects[pIndex].Socket.ConnectionStatus
               }
             />
+          )} */}
+          {props.currentOpenModal === ModalTypes.PROJECT_CREATE_MODAL && (
+            <CreateProjectModal />
           )}
-          {showRequestEditDialog && (
-            <EditDialog
+          {props.currentOpenModal === ModalTypes.PROJECT_EDIT_MODAL && (
+            <EditProjectModal />
+          )}
+          {props.currentOpenModal === ModalTypes.REQUEST_CREATE_MODAL && (
+            <CreateRequestModal />
+          )}
+          {/* {showRequestEditDialog && (
+            <EditModal
               open={showRequestEditDialog}
               closeDialog={toggleRequestEditDialog}
               type={lastAction.type}
               title={
-                lastAction.type === Types.NEW_REQUEST
+                lastAction.type === Types.CREATE_REQUEST
                   ? "Add Request"
                   : "Edit Request"
               }
               labelOne="Request Name"
               labelTwo="Payload"
               leftButtonText={
-                lastAction.type === Types.NEW_REQUEST ? "CREATE" : "UPDATE"
+                lastAction.type === Types.CREATE_REQUEST ? "CREATE" : "UPDATE"
               }
               description="Use a distinct request name to save configuration"
               inputBoxOneValue={
-                lastAction.type === Types.NEW_REQUEST
+                lastAction.type === Types.CREATE_REQUEST
                   ? ""
                   : existingAppData.App.Projects[pIndex].Requests[rIndex].Name
               }
               inputBoxTwoValue={
-                lastAction.type === Types.NEW_REQUEST
+                lastAction.type === Types.CREATE_REQUEST
                   ? lastAction.data
                   : existingAppData.App.Projects[pIndex].Requests[rIndex]
                       .Payload
               }
             />
-          )}
-          {showDeleteDialog && (
+          )} */}
+          {/* {showDeleteDialog && (
             <DeleteDialog
               open={showDeleteDialog}
               closeDialog={toggleDeleteDialog}
@@ -561,11 +569,29 @@ function App() {
               leftButtonText="DELETE"
               description={deleteDescription}
             />
-          )}
+          )} */}
         </div>
       </AppContext.Provider>
     </ThemeProvider>
   );
 }
 
-export default App;
+const mapStateToProps = state => {
+  return {
+    projects: state.projects,
+    selectedProject: state.selectedProject,
+    currentOpenModal: state.currentOpenModal
+  };
+};
+
+const mapDispatchToProps = dispatch => {
+  return {
+    projectConnected: payload =>
+      dispatch({ type: ActionTypes.CONNECT, payload })
+  };
+};
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(App);

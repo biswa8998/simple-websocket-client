@@ -9,9 +9,9 @@ import Slide from "@material-ui/core/Slide";
 
 import TextField from "@material-ui/core/TextField";
 
-import AppContext from "../context/appContext";
+import AppContext from "../../context/appContext";
 
-import Types from "../dataType";
+// import Types from "../../dataType";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -24,11 +24,11 @@ function DialogSlide(props) {
         open={props.open}
         TransitionComponent={Transition}
         keepMounted
-        onClose={props.closeDialog}
+        onClose={props.closeModal}
         aria-labelledby="dialog-slide-title"
         aria-describedby="dialog-slide-description"
-        onBackdropClick={props.closeDialog}
-        onEscapeKeyDown={props.closeDialog}
+        onBackdropClick={props.closeModal}
+        onEscapeKeyDown={props.closeModal}
       >
         <DialogTitle id="dialog-slide-title">{props.title}</DialogTitle>
         {props.children}
@@ -46,33 +46,28 @@ function DialogSlide(props) {
   );
 }
 
-export function EditDialog(props) {
+export function EditModal(props) {
   const [inputBoxOneValue, setInputBoxOne] = useState(props.inputBoxOneValue);
   const [inputBoxTwoValue, setInputBoxTwo] = useState(props.inputBoxTwoValue);
   const [inputBoxOneError, setInputBoxOneError] = useState(false);
-
-  const value = useContext(AppContext);
 
   useEffect(() => {
     setInputBoxOne(props.inputBoxOneValue);
     setInputBoxTwo(props.inputBoxTwoValue);
   }, [props.inputBoxOneValue, props.inputBoxTwoValue]);
 
-  function saveProject() {
+  function onEditConfirm() {
     if (inputBoxOneValue.trim().length === 0) {
       setInputBoxOneError(true);
       return;
     }
-
-    value.updateData({
-      type: props.type,
-      project: {
-        name: inputBoxOneValue,
-        url: inputBoxTwoValue
-      }
+    props.leftButtonAction({
+      projectName: inputBoxOneValue,
+      projectUrl: inputBoxTwoValue
     });
 
-    props.closeDialog();
+    setInputBoxOne("");
+    setInputBoxTwo("");
   }
 
   return (
@@ -80,22 +75,19 @@ export function EditDialog(props) {
       open={props.open}
       title={props.title}
       leftButtonText={props.leftButtonText}
-      leftButtonAction={saveProject}
+      leftButtonAction={onEditConfirm}
       rightButtonText="CANCEL"
-      rightButtonAction={props.closeDialog}
-      closeDialog={props.closeDialog}
+      rightButtonAction={props.rightButtonAction}
+      closeModal={props.closeModal}
     >
       <DialogContent>
         <DialogContentText id="dialog-slide-description">
           {props.description}
         </DialogContentText>
-
         <TextField
           variant="outlined"
           type="text"
-          autoFocus={
-            props.type === Types.NEW_REQUEST || props.type === Types.NEW_PROJECT
-          }
+          autoFocus={props.inputBoxOneFocus}
           margin="dense"
           label={props.labelOne}
           fullWidth
@@ -108,44 +100,21 @@ export function EditDialog(props) {
             setInputBoxOneError(false);
           }}
         />
-        {props.type === Types.EDIT_REQUEST ||
-        props.type === Types.NEW_REQUEST ? (
-          <TextField
-            id="outlined-multiline-static"
-            label={props.labelTwo}
-            multiline
-            rows={4}
-            variant="outlined"
-            fullWidth={true}
-            value={inputBoxTwoValue}
-            spellCheck="false"
-            onChange={e => {
-              setInputBoxTwo(e.target.value);
-            }}
-            disabled={props.canChangeValue}
-            autoFocus={
-              props.type === Types.EDIT_REQUEST ||
-              props.type === Types.EDIT_PROJECT
-            }
-          />
-        ) : (
-          <TextField
-            variant="outlined"
-            type="text"
-            margin="dense"
-            label={props.labelTwo}
-            fullWidth
-            value={inputBoxTwoValue}
-            onChange={e => {
-              setInputBoxTwo(e.target.value);
-            }}
-            disabled={!props.contentChangeEnabled}
-            autoFocus={
-              props.type === Types.EDIT_REQUEST ||
-              props.type === Types.EDIT_PROJECT
-            }
-          />
-        )}
+        <TextField
+          label={props.labelTwo}
+          multiline={props.multiline}
+          rows={props.multilineRows}
+          variant="outlined"
+          margin="dense"
+          fullWidth={true}
+          value={inputBoxTwoValue}
+          spellCheck="false"
+          onChange={e => {
+            setInputBoxTwo(e.target.value);
+          }}
+          disabled={props.isDisabled}
+          autoFocus={props.inputBoxTwoFocus}
+        />
       </DialogContent>
     </DialogSlide>
   );
@@ -165,7 +134,7 @@ export function DeleteDialog(props) {
       id: props.itemId
     });
 
-    props.closeDialog();
+    props.closeModal();
   }
 
   return (
@@ -175,8 +144,8 @@ export function DeleteDialog(props) {
       leftButtonText={props.leftButtonText}
       leftButtonAction={deleteItem}
       rightButtonText="CANCEL"
-      rightButtonAction={props.closeDialog}
-      closeDialog={props.closeDialog}
+      rightButtonAction={props.closeModal}
+      closeModal={props.closeModal}
     >
       <DialogContent>
         <DialogContentText id="dialog-slide-description">

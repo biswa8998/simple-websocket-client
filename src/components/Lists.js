@@ -12,7 +12,7 @@ import {
   CopyButton,
   JsonBeautyButton
 } from "./Buttons";
-import Types from "../dataType";
+import * as ActionTypes from "../types/actionTypes";
 
 import { copyToClipboard } from "../Util";
 
@@ -44,6 +44,7 @@ function Item(props) {
               buttonTitle={props.itemValue}
               onClick={e => {
                 props.onClickEdit(props.id);
+                e.stopPropagation();
               }}
             />
           )}
@@ -136,11 +137,11 @@ export function MessageLists(props) {
         props.messages.map((m, msgIndex) => {
           let rootStyle, messageHeaderStyle;
 
-          if (m.type === Types.SENT_MESSAGE) {
+          if (m.type === ActionTypes.MESSAGE_SENT) {
             rootStyle = classes.sentMessage;
             messageHeaderStyle = "sentMessageHeader";
           }
-          if (m.type === Types.RECEIVED_MESSAGE) {
+          if (m.type === ActionTypes.MESSAGE_RECEIVED) {
             rootStyle = classes.receivedMessage;
             messageHeaderStyle = "receivedMessageHeader";
           }
@@ -149,9 +150,7 @@ export function MessageLists(props) {
           try {
             JSON.parse(m.message);
             isJson = true;
-          } catch (ex) {
-            // console.log(m.message);
-          }
+          } catch (ex) {}
 
           let msg = m.message;
           let beautified = false;

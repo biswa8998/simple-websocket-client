@@ -1,18 +1,26 @@
 import React, { useState, useEffect } from "react";
+import { connect } from "react-redux";
 
 import { Grid, Typography } from "@material-ui/core";
 import AppStyles from "../Style";
 import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
 
+import * as Actions from "../actions";
+import * as ActionTypes from "../types/actionTypes";
+
 function AppPayload(props) {
   const [payload, setPayload] = useState(props.payload);
   const [showError, setShowError] = useState(false);
   const classes = AppStyles();
 
+  const { projects, selectedProject } = props;
+
   useEffect(() => {
     setPayload(props.payload);
   }, [props.payload]);
+
+  const isUrlConnected = projects[selectedProject].ConnectionState;
 
   return (
     <Grid
@@ -43,9 +51,16 @@ function AppPayload(props) {
             color="primary"
             size="small"
             onClick={() => {
-              props.onClickSend(payload);
+              props.sendMessageToWebsocket({
+                message: payload,
+                projectId: selectedProject,
+                project: projects[selectedProject]
+              });
             }}
-            disabled={!props.connected || payload.trim().length === 0}
+            disabled={
+              isUrlConnected === ActionTypes.DISCONNECTED ||
+              payload.trim().length === 0
+            }
           >
             SEND
           </Button>
@@ -54,12 +69,10 @@ function AppPayload(props) {
             color="primary"
             size="small"
             onClick={() => {
-              if (props.hasProject) {
-                props.addToProject(payload);
-                setShowError(false);
-              } else {
-                setShowError(true);
-              }
+              props.showCreateRequestModal({
+                payload: payload,
+                projectId: props.selectedProject
+              });
             }}
             disabled={payload.trim().length === 0}
             style={{ marginLeft: "20px" }}
@@ -81,4 +94,22 @@ function AppPayload(props) {
   );
 }
 
-export default AppPayload;
+const mapStateToProps = state => {
+  return {
+    projects: state.projects,
+    selectedProject: state.selectedProject
+  };
+};
+const mapStateToDispatch = dispatch => {
+  return {
+    sendMessageToWebsocket: data =>
+      dispatch(Actions.sendMessageToWebsocket(data)),
+    showCreateRequestModal: data =>
+      dispatch(Actions.showCreateRequestModal(data))
+  };
+};
+
+export default connect(
+  mapStateToProps,
+  mapStateToDispatch
+)(AppPayload);
