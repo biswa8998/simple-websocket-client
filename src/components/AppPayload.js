@@ -10,15 +10,23 @@ import * as Actions from "../actions";
 import * as ActionTypes from "../types/actionTypes";
 
 function AppPayload(props) {
-  const [payload, setPayload] = useState(props.payload);
+  const { projects, selectedProject } = props;
+  const [payload, setPayload] = useState("");
   const [showError, setShowError] = useState(false);
   const classes = AppStyles();
 
-  const { projects, selectedProject } = props;
+  let requestPayload = "";
+
+  if (projects[selectedProject].Requests.length > 0) {
+    requestPayload =
+      projects[selectedProject].Requests[
+        projects[selectedProject].SelectedRequest
+      ].Payload;
+  }
 
   useEffect(() => {
-    setPayload(props.payload);
-  }, [props.payload]);
+    setPayload(requestPayload);
+  }, [requestPayload]);
 
   const isUrlConnected = projects[selectedProject].ConnectionState;
 
@@ -58,7 +66,7 @@ function AppPayload(props) {
               });
             }}
             disabled={
-              isUrlConnected === ActionTypes.DISCONNECTED ||
+              isUrlConnected !== ActionTypes.CONNECTED ||
               payload.trim().length === 0
             }
           >
@@ -74,7 +82,7 @@ function AppPayload(props) {
                 projectId: props.selectedProject
               });
             }}
-            disabled={payload.trim().length === 0}
+            disabled={!payload || (payload && payload.trim().length === 0)}
             style={{ marginLeft: "20px" }}
           >
             ADD TO PROJECT

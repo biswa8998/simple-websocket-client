@@ -21,6 +21,7 @@ import WS from "./Websocket";
 import CreateProjectModal from "./components/modals/CreateProjectModal";
 import EditProjectModal from "./components/modals/EditProjectModal";
 import CreateRequestModal from "./components/modals/CreateRequestModal";
+import EditRequestModal from "./components/modals/EditRequestModal";
 
 import { connect } from "react-redux";
 import * as ActionTypes from "./types/actionTypes";
@@ -451,10 +452,7 @@ function App(props) {
             {/* Request and response */}
             <Grid item lg={8} xs={12} className="app-columns">
               <Grid id="connection-section" className="project-column-wrapper">
-                <AppConnection
-                  saveNewProject={saveNewProject}
-                  onClickConnect={onClickConnect}
-                />
+                <AppConnection />
                 <AppPayload
                   onClickSend={onClickSend}
                   payload={
@@ -525,6 +523,9 @@ function App(props) {
           )}
           {props.currentOpenModal === ModalTypes.REQUEST_CREATE_MODAL && (
             <CreateRequestModal />
+          )}
+          {props.currentOpenModal === ModalTypes.REQUEST_EDIT_MODAL && (
+            <EditRequestModal />
           )}
           {/* {showRequestEditDialog && (
             <EditModal

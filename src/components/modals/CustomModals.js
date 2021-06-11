@@ -62,8 +62,8 @@ export function EditModal(props) {
       return;
     }
     props.leftButtonAction({
-      projectName: inputBoxOneValue,
-      projectUrl: inputBoxTwoValue
+      name: inputBoxOneValue,
+      content: inputBoxTwoValue
     });
 
     setInputBoxOne("");

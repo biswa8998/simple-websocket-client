@@ -117,7 +117,7 @@ export const deleteRequest = payload => {
 
 export const changeRequest = payload => {
   return {
-    type: Types.DELETE_REQUEST,
+    type: Types.CHANGE_REQUEST,
     payload,
     when: new Date().getTime()
   };

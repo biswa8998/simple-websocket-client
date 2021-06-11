@@ -17,7 +17,6 @@ export const initialState = {
   lastAction: "",
   lastActionTime: "",
   selectedProject: 0,
-  selectedRequest: null,
   savedProjects: 0,
   currentOpenModal: null,
   operationMode: "",
@@ -87,6 +86,12 @@ function appReducer(state = initialState, action) {
       newState.currentOpenModal = ModalTypes.REQUEST_CREATE_MODAL;
       newState.activePayload = action.payload.payload;
       return newState;
+
+    case ModalTypes.SHOW_EDIT_REQUEST_MODAL:
+      newState.currentOpenModal = ModalTypes.REQUEST_EDIT_MODAL;
+      projects[newState.selectedProject].SelectedRequest = action.payload;
+      newState.projects = projects;
+      return newState;
     /**********************************************************
      * ********************************************************
      *                Project Reducers                        *
@@ -98,25 +103,28 @@ function appReducer(state = initialState, action) {
 
     case Types.CREATE_PROJECT:
       if (newState.savedProjects === 0) {
-        projects[newState.selectedProject].Name = action.payload.projectName;
-        projects[newState.selectedProject].Url = action.payload.projectUrl;
+        projects[newState.selectedProject].Name = action.payload.name;
+        projects[newState.selectedProject].Url = action.payload.content;
+        projects[newState.selectedProject].SelectedRequest = 0;
       } else {
         const newProject = {};
-        newProject.Name = action.payload.projectName;
-        newProject.Url = action.payload.projectUrl;
+        newProject.Name = action.payload.name;
+        newProject.Url = action.payload.content;
         newProject.Requests = [];
         newProject.Messages = [];
         newProject.ConnectionState = Types.DISCONNECTED;
         newProject.Websocket = null;
+        newProject.SelectedRequest = 0;
         projects = [...projects, newProject];
       }
+      newState.selectedProject = projects.length - 1;
       newState.savedProjects += 1;
       newState.projects = projects;
       return newState;
 
     case Types.EDIT_PROJECT:
-      projects[newState.selectedProject].Name = action.payload.projectName;
-      projects[newState.selectedProject].Url = action.payload.projectUrl;
+      projects[newState.selectedProject].Name = action.payload.name;
+      projects[newState.selectedProject].Url = action.payload.content;
       newState.projects = projects;
       return newState;
 
@@ -126,7 +134,19 @@ function appReducer(state = initialState, action) {
      * ********************************************************
      *********************************************************/
 
+    case Types.CHANGE_REQUEST:
+      projects[newState.selectedProject].SelectedRequest = action.payload;
+      newState.projects = projects;
+      return newState;
+
     case Types.CREATE_REQUEST:
+      projects[newState.selectedProject].Requests.push({
+        Name: action.payload.name,
+        Payload: action.payload.content
+      });
+      projects[newState.selectedProject].SelectedRequest =
+        projects[newState.selectedProject].Requests.length - 1;
+      newState.projects = projects;
       return newState;
 
     /**********************************************************
