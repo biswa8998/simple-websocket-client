@@ -23,19 +23,19 @@ function AppConnection(props) {
 
   const [urlError, setUrlError] = useState(false);
 
-  const onClickConnect = url => {
+  const onClickConnect = (url) => {
     if (connectionState === Types.DISCONNECTED) {
       props.createWebsocket({ url, selectedProject });
     }
     if (connectionState === Types.CONNECTED) {
       props.closeWebsocket({
         project: projects[selectedProject],
-        projectId: selectedProject
+        projectId: selectedProject,
       });
     }
   };
 
-  const saveNewProject = url => {
+  const saveNewProject = (url) => {
     if (url.trim().length === 0) {
       setUrlError(true);
 
@@ -43,7 +43,7 @@ function AppConnection(props) {
     }
     props.showCreateProjectModal({
       url,
-      selectedProject
+      selectedProject,
     });
   };
 
@@ -59,7 +59,7 @@ function AppConnection(props) {
           fullWidth={true}
           value={url}
           error={urlError}
-          onChange={e => {
+          onChange={(e) => {
             setUrl(e.target.value);
           }}
           onClick={() => {
@@ -79,7 +79,7 @@ function AppConnection(props) {
           {connected ? "DISCONNECT" : "CONNECT"}
         </Button>
       </Grid>
-      <p className="save-this-request">
+      {/* <p className="save-this-request">
         <Button
           color="primary"
           variant="contained"
@@ -90,26 +90,23 @@ function AppConnection(props) {
         >
           {savedProjects ? "NEW PROJECT" : "SAVE PROJECT"}
         </Button>
-      </p>
+      </p> */}
     </Grid>
   );
 }
 
-const mapStateToProps = state => {
+const mapStateToProps = (state) => {
   const { projects, selectedProject, savedProjects } = state;
   return { projects, selectedProject, savedProjects };
 };
 
-const mapDispatchToProps = dispatch => {
+const mapDispatchToProps = (dispatch) => {
   return {
-    createWebsocket: data => dispatch(Actions.createWebsocket(data)),
-    closeWebsocket: data => dispatch(Actions.closeWebsocket(data)),
-    showCreateProjectModal: data =>
-      dispatch(Actions.showCreateProjectModal(data))
+    createWebsocket: (data) => dispatch(Actions.createWebsocket(data)),
+    closeWebsocket: (data) => dispatch(Actions.closeWebsocket(data)),
+    showCreateProjectModal: (data) =>
+      dispatch(Actions.showCreateProjectModal(data)),
   };
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(AppConnection);
+export default connect(mapStateToProps, mapDispatchToProps)(AppConnection);

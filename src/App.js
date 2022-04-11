@@ -34,12 +34,12 @@ const theme = createMuiTheme({
       main: "#ff8d3a",
       dark: "#002884",
       contrastText: "#fff",
-      hover: "#fff"
+      hover: "#fff",
     },
     secondary: {
-      main: "#eb4848"
-    }
-  }
+      main: "#eb4848",
+    },
+  },
 });
 
 function AppNavbar() {
@@ -94,7 +94,7 @@ function App(props) {
 
   const AppData = {
     data: existingAppData,
-    updateData: updateAppData
+    updateData: updateAppData,
   };
 
   function saveAppData(data) {
@@ -137,7 +137,7 @@ function App(props) {
     const theUrl = event.target.url;
     addMessage({
       type: Types.RECEIVED_MESSAGE,
-      message: `Connected to server ${theUrl}`
+      message: `Connected to server ${theUrl}`,
     });
 
     setExistingAppData(newData);
@@ -146,7 +146,7 @@ function App(props) {
   function onCloseSuccess(event) {
     addMessage({
       type: Types.RECEIVED_MESSAGE,
-      message: `Connection closed to url ${event.target.url}`
+      message: `Connection closed to url ${event.target.url}`,
     });
     const newData = { ...existingAppData };
     newData.App.Projects[pIndex].Socket.Connection = null;
@@ -161,7 +161,7 @@ function App(props) {
   function onWsMessage(event) {
     addMessage({
       type: Types.RECEIVED_MESSAGE,
-      message: event.data
+      message: event.data,
     });
     setRefresh(event.timeStamp);
   }
@@ -172,7 +172,7 @@ function App(props) {
       // setAppUrl(url);
       addMessage({
         type: Types.SENT_MESSAGE,
-        message: `Connecting to server ${url}`
+        message: `Connecting to server ${url}`,
       });
 
       let appSocket = null;
@@ -186,7 +186,7 @@ function App(props) {
       } catch (error) {
         addMessage({
           type: Types.RECEIVED_MESSAGE,
-          message: error.message
+          message: error.message,
         });
         return;
       }
@@ -197,7 +197,7 @@ function App(props) {
     } else {
       addMessage({
         type: Types.SENT_MESSAGE,
-        message: "Close connection to url " + url
+        message: "Close connection to url " + url,
       });
       existingAppData.App.Projects[pIndex].Socket.Connection.close();
     }
@@ -213,7 +213,7 @@ function App(props) {
 
       addMessage({
         type: Types.SENT_MESSAGE,
-        message: payload
+        message: payload,
       });
     }
   }
@@ -252,7 +252,7 @@ function App(props) {
         newData.App.Projects[newData.App.Projects.length - 1].Url =
           data.project.url;
         newData.App.Projects[newData.App.Projects.length - 1].Socket = {
-          ...newData.App.Projects[0].Socket
+          ...newData.App.Projects[0].Socket,
         };
       } else {
         newData.App.Projects[newData.App.Projects.length - 1].Name =
@@ -263,7 +263,7 @@ function App(props) {
         newData.App.Projects[newData.App.Projects.length - 1]["Messages"] = [];
         newData.App.Projects[newData.App.Projects.length - 1]["Socket"] = {
           ConnectionStatus: false,
-          Connection: null
+          Connection: null,
         };
       }
 
@@ -325,7 +325,7 @@ function App(props) {
 
       requestArray.push({
         Name: data.project.name,
-        Payload: data.project.url
+        Payload: data.project.url,
       });
       newData.App.Projects[pIndex].Requests = requestArray;
       saveAppData(newData);
@@ -373,11 +373,11 @@ function App(props) {
       ? document.getElementById("app-payload-wrapper").offsetHeight
       : 0;
     const height = a - (b + c);
-    const AppStyles = makeStyles(theme => ({
+    const AppStyles = makeStyles((theme) => ({
       msgSectionHeight: {
         height: height - 20,
-        overflowY: "auto"
-      }
+        overflowY: "auto",
+      },
     }));
     return AppStyles;
   }
@@ -408,7 +408,7 @@ function App(props) {
           <AppNavbar></AppNavbar>
           <Grid container>
             {/* List all the projects */}
-            <AppProjects
+            {/* <AppProjects
               onProjectClick={onProjectClick}
               onProjectEdit={data => {
                 setLastAction({ type: Types.EDIT_PROJECT, data: null });
@@ -428,29 +428,29 @@ function App(props) {
               selectedProjectIndex={
                 existingAppData.InitialState ? pIndex : pIndex - 1
               }
-            />
+            /> */}
             {/* List all the requests of selected project */}
-            <AppRequests
+            {/* <AppRequests
               requests={[]}
               onRequestClick={onRequestClick}
-              onRequestEdit={data => {
+              onRequestEdit={(data) => {
                 setLastAction({ type: Types.EDIT_REQUEST, data: null });
                 toggleRequestEditDialog();
               }}
-              onRequestDelete={id => {
+              onRequestDelete={(id) => {
                 setLastAction({
                   type: Types.DELETE_REQUEST,
                   data: {
-                    deleteId: id
-                  }
+                    deleteId: id,
+                  },
                 });
                 // updateAppData({ type: Types.DELETE_PROJECT, id: data });
                 toggleDeleteDialog();
               }}
               selectedRequestIndex={rIndex}
-            />
+            /> */}
             {/* Request and response */}
-            <Grid item lg={8} xs={12} className="app-columns">
+            <Grid item lg={12} xs={12} className="app-columns">
               <Grid id="connection-section" className="project-column-wrapper">
                 <AppConnection />
                 <AppPayload
@@ -473,7 +473,7 @@ function App(props) {
                   container
                   className="app-messages"
                   classes={{
-                    root: getHeightStyle()().msgSectionHeight
+                    root: getHeightStyle()().msgSectionHeight,
                   }}
                 >
                   <Grid container>
@@ -577,22 +577,19 @@ function App(props) {
   );
 }
 
-const mapStateToProps = state => {
+const mapStateToProps = (state) => {
   return {
     projects: state.projects,
     selectedProject: state.selectedProject,
-    currentOpenModal: state.currentOpenModal
+    currentOpenModal: state.currentOpenModal,
   };
 };
 
-const mapDispatchToProps = dispatch => {
+const mapDispatchToProps = (dispatch) => {
   return {
-    projectConnected: payload =>
-      dispatch({ type: ActionTypes.CONNECT, payload })
+    projectConnected: (payload) =>
+      dispatch({ type: ActionTypes.CONNECT, payload }),
   };
 };
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(App);
+export default connect(mapStateToProps, mapDispatchToProps)(App);

@@ -37,3 +37,4 @@ export const WS_ERROR = "WS_ERROR";
 export const MESSAGE_NEW = "MESSAGE_NEW";
 export const MESSAGE_SENT = "MESSAGE_SENT";
 export const MESSAGE_RECEIVED = "MESSAGE_RECEIVED";
+export const CLEAR_ALL_MESSAGES = "CLEAR_ALL_MESSAGES";

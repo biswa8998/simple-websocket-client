@@ -30,6 +30,11 @@ function AppPayload(props) {
 
   const isUrlConnected = projects[selectedProject].ConnectionState;
 
+  let numberOfMessages = 0;
+  try {
+    numberOfMessages = props.projects[props.selectedProject].Messages.length;
+  } catch (e) {}
+
   return (
     <Grid
       container
@@ -49,7 +54,7 @@ function AppPayload(props) {
           fullWidth={true}
           value={payload}
           spellCheck="false"
-          onChange={e => {
+          onChange={(e) => {
             setPayload(e.target.value);
           }}
         />
@@ -62,7 +67,7 @@ function AppPayload(props) {
               props.sendMessageToWebsocket({
                 message: payload,
                 projectId: selectedProject,
-                project: projects[selectedProject]
+                project: projects[selectedProject],
               });
             }}
             disabled={
@@ -72,7 +77,7 @@ function AppPayload(props) {
           >
             SEND
           </Button>
-          <Button
+          {/* <Button
             variant="contained"
             color="primary"
             size="small"
@@ -86,6 +91,18 @@ function AppPayload(props) {
             style={{ marginLeft: "20px" }}
           >
             ADD TO PROJECT
+          </Button> */}
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={() => {
+              props.clearAllMessages({ projectId: props.selectedProject });
+            }}
+            disabled={numberOfMessages === 0}
+            style={{ marginLeft: "20px" }}
+          >
+            CLEAR
           </Button>
           {showError ? (
             <Typography
@@ -102,22 +119,20 @@ function AppPayload(props) {
   );
 }
 
-const mapStateToProps = state => {
+const mapStateToProps = (state) => {
   return {
     projects: state.projects,
-    selectedProject: state.selectedProject
+    selectedProject: state.selectedProject,
   };
 };
-const mapStateToDispatch = dispatch => {
+const mapStateToDispatch = (dispatch) => {
   return {
-    sendMessageToWebsocket: data =>
+    sendMessageToWebsocket: (data) =>
       dispatch(Actions.sendMessageToWebsocket(data)),
-    showCreateRequestModal: data =>
-      dispatch(Actions.showCreateRequestModal(data))
+    showCreateRequestModal: (data) =>
+      dispatch(Actions.showCreateRequestModal(data)),
+    clearAllMessages: (data) => dispatch(Actions.clearAllMessages(data)),
   };
 };
 
-export default connect(
-  mapStateToProps,
-  mapStateToDispatch
-)(AppPayload);
+export default connect(mapStateToProps, mapStateToDispatch)(AppPayload);

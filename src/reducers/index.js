@@ -8,11 +8,11 @@ export const initialState = {
     {
       Name: "Untitled",
       Requests: [],
-      Url: "wss://echo.websocket.org",
+      Url: "ws://localhost:8080",
       Messages: [],
       Websocket: null,
-      ConnectionState: Types.DISCONNECTED
-    }
+      ConnectionState: Types.DISCONNECTED,
+    },
   ],
   lastAction: "",
   lastActionTime: "",
@@ -21,7 +21,7 @@ export const initialState = {
   currentOpenModal: null,
   operationMode: "",
   activeUrl: "",
-  activePayload: ""
+  activePayload: "",
 };
 
 function appReducer(state = initialState, action) {
@@ -142,7 +142,7 @@ function appReducer(state = initialState, action) {
     case Types.CREATE_REQUEST:
       projects[newState.selectedProject].Requests.push({
         Name: action.payload.name,
-        Payload: action.payload.content
+        Payload: action.payload.content,
       });
       projects[newState.selectedProject].SelectedRequest =
         projects[newState.selectedProject].Requests.length - 1;
@@ -160,12 +160,17 @@ function appReducer(state = initialState, action) {
         type: action.message.type,
         message: action.message.message,
         time: getTime(),
-        id: new Date().getTime() + Math.random() * 10000
+        id: new Date().getTime() + Math.random() * 10000,
       });
       projects[action.payload.projectId].Messages = messages;
       newState.projects = projects;
       return newState;
 
+    case Types.CLEAR_ALL_MESSAGES:
+      messages = [];
+      projects[action.payload.projectId].Messages = messages;
+      newState.projects = projects;
+      return newState;
     default:
       return state;
   }
